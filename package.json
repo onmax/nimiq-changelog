@@ -14,11 +14,17 @@
   "dependencies": {
     "@iconify-json/lucide": "^1.2.66",
     "@iconify-json/simple-icons": "^1.2.50",
+    "@nuxt/fonts": "^0.11.4",
+    "@nuxt/icon": "^2.0.0",
     "@nuxt/ui": "^4.0.0-alpha.1",
     "@nuxtjs/mdc": "0.17.4",
     "@vercel/analytics": "^1.5.0",
     "@vueuse/nuxt": "13.9.0",
+    "nimiq-css": "file:/home/maxi/nimiq/ui/packages/nimiq-css/nimiq-css-1.0.0-beta.75.tgz",
+    "nimiq-icons": "1.0.0-beta.75",
     "nuxt": "4.1.0",
+    "nuxt-safe-runtime-config": "^0.0.3",
+    "valibot": "^1.1.0",
     "vue": "^3.5.21"
   },
   "devDependencies": {

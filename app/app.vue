@@ -11,8 +11,8 @@ useHead({
   }
 })
 
-const title = 'Nuxt Changelog'
-const description = 'Discover the latest releases from Nuxt and the official modules.'
+const title = 'Nimiq Changelog'
+const description = 'Discover the latest releases from Nimiq ecosystem projects.'
 
 useSeoMeta({
   title,
@@ -27,30 +27,39 @@ useSeoMeta({
     <div class="min-h-screen xl:grid xl:grid-cols-2">
       <UPageSection
         title="Changelog"
-        :description="description"
+        :description
         orientation="vertical"
         :links="[{
-          label: 'Nuxt Website',
-          icon: 'i-simple-icons-nuxt',
+          label: 'Nimiq Website',
+          icon: 'i-nimiq:logos-nimiq-mono',
+          ui: {
+            leadingIcon: 'mr-1 size-4'
+          },
+          class: 'nq-arrow nq-pill-blue',
           variant: 'ghost',
-          size: 'md',
-          to: 'https://nuxt.com'
+          size: 'lg',
+          to: 'https://nimiq.com',
+          target: '_blank'
         }, {
           label: 'Source Code',
-          icon: 'i-simple-icons-github',
+          icon: 'i-nimiq:logos-github-mono',
+          ui: {
+            leadingIcon: 'mr-1 size-4'
+          },
+          class: 'nq-arrow nq-pill-tertiary bg-transparent!',
           variant: 'ghost',
-          size: 'md',
-          to: 'https://github.com/atinux/nuxt-changelog',
+          size: 'lg',
+          to: 'https://github.com/onmax/nimiq-changelog',
           target: '_blank'
         }]"
         :ui="{
-          root: 'border-b border-default xl:border-b-0 xl:sticky xl:inset-y-0 xl:h-screen overflow-hidden',
+          root: 'border-b border-primary-200 xl:border-b-0 xl:sticky xl:inset-y-0 xl:h-screen overflow-hidden',
           container: 'h-full items-center justify-center',
-          wrapper: 'flex flex-col',
-          headline: 'mb-6',
+          wrapper: 'flex flex-col bg-pink!',
+          headline: 'mb-6 text-neutral',
           title: 'text-left text-4xl',
-          description: 'text-left max-w-lg',
-          links: 'gap-1 justify-start -ms-2.5'
+          description: 'text-left max-w-md text-pretty',
+          links: 'gap-2 justify-start -ms-2.5'
         }"
       >
         <template #top>

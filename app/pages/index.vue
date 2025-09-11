@@ -26,15 +26,19 @@ const { data: releases } = await useFetch(`/api/releases`, {
       target="_blank"
       :title="release.title"
       :badge="{
-        label: release.repo === 'nuxt/nuxt' ? 'nuxt' : `@${release.repo}`,
+        label: release.repo === 'nimiq/core-rs-albatross' ? 'Albatross' : 
+               release.repo === 'nimiq/wallet' ? 'Wallet' :
+               release.repo === 'nimiq/keyguard' ? 'Keyguard' :
+               release.repo === 'nimiq/hub' ? 'Hub' :
+               release.repo === 'nimiq/pay-app' ? 'Nimiq Pay' : release.repo,
         variant: 'outline',
-        color: release.repo === 'nuxt/nuxt' ? 'primary' : 'neutral'
+        color: 'primary'
       }"
       :date="formatTimeAgo(new Date(release.date))"
       :ui="{
-        root: 'flex items-start',
+        root: 'flex items-start text-neutral',
         container: 'max-w-xl 2xl:mx-12 w-full',
-        header: 'border-b border-default pb-4',
+        header: 'border-b border-default pb-4 font-semibold',
         title: 'text-3xl',
         date: 'text-xs/9 text-highlighted font-mono',
         indicator: 'sticky top-0 pt-16 -mt-16 sm:pt-24 sm:-mt-24 lg:pt-32 lg:-mt-32'

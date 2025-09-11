@@ -1,9 +1,16 @@
 # Nuxt Changelog
 
-Example of listing releases from multiple GitHub repositories.
+A Nuxt 4 application that displays GitHub release changelogs from multiple repositories in a clean timeline format. Built with Nuxt UI v4 and TypeScript.
 
-- [Live demo](https://nuxt-changelog.vercel.app/)
-- [Nuxt UI Changelog Template](https://github.com/nuxt-ui-templates/changelog)
+Originally inspired by [nuxt-changelog.vercel.app](https://nuxt-changelog.vercel.app/)
+
+## Features
+
+- Timeline view of releases from multiple GitHub repositories
+- Markdown rendering for release notes
+- Expandable/collapsible release bodies
+- Server-side caching for performance
+- Responsive design with Nuxt UI components
 
 
 ## Setup

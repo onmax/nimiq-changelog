@@ -1,25 +1,42 @@
 @import "tailwindcss";
 @import "@nuxt/ui";
+@import "nimiq-css/css/colors.css";
+@import "nimiq-css/css/utilities.css";
 
 @theme static {
-  --font-sans: 'Public Sans', sans-serif;
-
-  --color-green-50: #EFFDF5;
-  --color-green-100: #D9FBE8;
-  --color-green-200: #B3F5D1;
-  --color-green-300: #75EDAE;
-  --color-green-400: #00DC82;
-  --color-green-500: #00C16A;
-  --color-green-600: #00A155;
-  --color-green-700: #007F45;
-  --color-green-800: #016538;
-  --color-green-900: #0A5331;
-  --color-green-950: #052E16;
+  --font-sans: 'Mulish', sans-serif;
+  --font-mono: 'Fira Code', monospace;
 }
 
-.dark {
-  --ui-bg: var(--ui-color-neutral-950);
+@theme default {
+  --color-primary: var(--colors-blue);
+  --color-primary-50: color-mix(in srgb, var(--colors-blue) 8%, white);
+  --color-primary-100: color-mix(in srgb, var(--colors-blue) 15%, white);
+  --color-primary-200: color-mix(in srgb, var(--colors-blue) 25%, white);
+  --color-primary-300: color-mix(in srgb, var(--colors-blue) 40%, white);
+  --color-primary-400: color-mix(in srgb, var(--colors-blue) 70%, white);
+  --color-primary-500: var(--colors-blue);
+  --color-primary-600: color-mix(in srgb, var(--colors-blue) 85%, black);
+  --color-primary-700: color-mix(in srgb, var(--colors-blue) 70%, black);
+  --color-primary-800: color-mix(in srgb, var(--colors-blue) 55%, black);
+  --color-primary-900: color-mix(in srgb, var(--colors-blue) 40%, black);
+  --color-primary-950: color-mix(in srgb, var(--colors-blue) 25%, black);
+
+  --color-neutral: var(--colors-neutral);
+  --color-neutral-50: color-mix(in srgb, var(--colors-neutral) 8%, white);
+  --color-neutral-100: color-mix(in srgb, var(--colors-neutral) 15%, white);
+  --color-neutral-200: color-mix(in srgb, var(--colors-neutral) 25%, white);
+  --color-neutral-300: color-mix(in srgb, var(--colors-neutral) 40%, white);
+  --color-neutral-400: color-mix(in srgb, var(--colors-neutral) 70%, white);
+  --color-neutral-500: var(--colors-neutral);
+  --color-neutral-600: color-mix(in srgb, var(--colors-neutral) 85%, black);
+  --color-neutral-700: color-mix(in srgb, var(--colors-neutral) 70%, black);
+  --color-neutral-800: color-mix(in srgb, var(--colors-neutral) 55%, black);
+  --color-neutral-900:  color-mix(in srgb, var(--colors-neutral) 40%, black);
+  --color-neutral-950:  color-mix(in srgb, var(--colors-neutral) 25%, black);
+
+  /* --ui-bg: var(--ui-color-neutral-950);
   --ui-bg-muted: var(--ui-color-neutral-900);
   --ui-bg-elevated: var(--ui-color-neutral-900);
-  --ui-bg-accented: var(--ui-color-neutral-800);
+  --ui-bg-accented: var(--ui-color-neutral-800); */
 }
