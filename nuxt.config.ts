@@ -4,6 +4,7 @@ import { icons as nimiqIcons } from 'nimiq-icons'
 import * as v from 'valibot'
 
 export default defineNuxtConfig({
+  hub: { cache: true },
 
   modules: [
     '@nuxt/eslint',
@@ -12,7 +13,8 @@ export default defineNuxtConfig({
     '@vueuse/nuxt',
     '@nuxt/fonts',
     '@nuxt/icon',
-    'nuxt-safe-runtime-config'
+    'nuxt-safe-runtime-config',
+    '@nuxthub/core'
   ],
   devtools: {
     enabled: true
@@ -35,7 +37,7 @@ export default defineNuxtConfig({
   },
 
   routeRules: {
-    '/': { isr: 60 }
+    '/': { cache: { maxAge: 60 * 10, swr: true } }
   },
 
   compatibilityDate: '2025-06-01',
