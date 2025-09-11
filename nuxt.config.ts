@@ -36,8 +36,9 @@ export default defineNuxtConfig({
   },
 
   routeRules: {
-    '/**': { cache: { maxAge: 60 * 10, swr: true } },
-    '/api/**': { cache: { maxAge: 60 * 10, swr: true } }
+    '/': { cache: { maxAge: 60 * 10, swr: true } },
+    '/api/releases': { cache: { maxAge: 60 * 10, swr: true } },
+    '/_nuxt/**': { headers: { 'cache-control': 'max-age=31536000' } }
   },
 
   compatibilityDate: '2025-06-01',
