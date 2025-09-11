@@ -1,5 +1,5 @@
 <p align="center">
-  <a href="https://github.com/onmax/nimiq-changelog" target="_blank">
+  <a href="https://nimiq-changelog.je-cf9.workers.dev/" target="_blank">
     <picture>
       <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/onmax/nimiq-changelog/HEAD/.github/logo-dark.svg">
       <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/onmax/nimiq-changelog/HEAD/.github/logo-light.svg">
@@ -9,13 +9,12 @@
 </p>
 
 <p align="center">
-  An application to track latest changes from multiple repositories from Nimiq
+  An application to track latest changes from multiple repositories from Nimiq.
 </p>
 
+https://nimiq-changelog.je-cf9.workers.dev/
 
-A Nuxt 4 application that displays GitHub release changelogs from multiple repositories in a clean timeline format. Built with Nuxt UI v4 and TypeScript.
-
-Originally inspired by [nuxt-changelog.vercel.app](https://nuxt-changelog.vercel.app/)
+> Forked from [nuxt-changelog.vercel.app](https://nuxt-changelog.vercel.app/)
 
 ## Features
 
