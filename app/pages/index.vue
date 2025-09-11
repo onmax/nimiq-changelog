@@ -26,11 +26,11 @@ const { data: releases } = await useFetch(`/api/releases`, {
       target="_blank"
       :title="release.title"
       :badge="{
-        label: release.repo === 'nimiq/core-rs-albatross' ? 'Albatross' : 
-               release.repo === 'nimiq/wallet' ? 'Wallet' :
-               release.repo === 'nimiq/keyguard' ? 'Keyguard' :
-               release.repo === 'nimiq/hub' ? 'Hub' :
-               release.repo === 'nimiq/pay-app' ? 'Nimiq Pay' : release.repo,
+        label: release.repo === 'nimiq/core-rs-albatross' ? 'Albatross'
+          : release.repo === 'nimiq/wallet' ? 'Wallet'
+            : release.repo === 'nimiq/keyguard' ? 'Keyguard'
+              : release.repo === 'nimiq/hub' ? 'Hub'
+                : release.repo === 'nimiq/pay-app' ? 'Nimiq Pay' : release.repo,
         variant: 'outline',
         color: 'primary'
       }"

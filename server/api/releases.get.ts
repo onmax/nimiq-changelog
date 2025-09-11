@@ -10,34 +10,36 @@ const NIMIQ_FRONTEND_URL = 'https://nimiq-frontend-release-notes.netlify.app/mai
 
 function removeDuplicateWhatsSections(body: MDCRoot): MDCRoot {
   const children = body.children.filter((child, index) => {
-    if (child.type === 'element' && child.tag === 'h2' && 
-        child.children?.[0]?.type === 'text' && child.children[0].value === "What's Changed") {
+    if (child.type === 'element' && child.tag === 'h2'
+      && child.children?.[0]?.type === 'text' && child.children[0].value === 'What\'s Changed') {
       // Check if the next element is an h3 with "What's changed"
       const nextChild = body.children[index + 1]
-      if (nextChild?.type === 'element' && nextChild.tag === 'h3' && 
-          nextChild.children?.[0]?.type === 'text' && 
-          nextChild.children[0].value.toLowerCase() === "what's changed") {
+      if (nextChild?.type === 'element' && nextChild.tag === 'h3'
+        && nextChild.children?.[0]?.type === 'text'
+        && nextChild.children[0].value.toLowerCase() === 'what\'s changed') {
         return false // Remove the duplicate h2
       }
     }
     return true
   })
-  
+
   return { ...body, children }
 }
 
 export default defineCachedEventHandler(async () => {
   console.log('fetching releases')
-  
+
   const runtimeConfig = useRuntimeConfig()
   const { token: gitlabToken, projects: gitlabProjects, baseUrl: gitlabBaseUrl } = runtimeConfig.gitlab
-  
+
   // Parse GitLab projects from config
-  const GITLAB_PROJECTS = gitlabProjects ? gitlabProjects.split(',').map(project => {
-    const [id, name] = project.split(':')
-    return { id, name }
-  }) : []
-  
+  const GITLAB_PROJECTS = gitlabProjects
+    ? gitlabProjects.split(',').map((project) => {
+        const [id, name] = project.split(':')
+        return { id, name }
+      })
+    : []
+
   // Fetch GitHub releases
   const githubReleases: Release[] = await Promise.all(
     REPOS.map(async (repo) => {
@@ -65,7 +67,7 @@ export default defineCachedEventHandler(async () => {
         GITLAB_PROJECTS.map(async (project) => {
           const releases = await $fetch<any[]>(`${gitlabBaseUrl}/api/v4/projects/${project.id}/releases`, {
             headers: {
-              'Authorization': `Bearer ${gitlabToken}`
+              Authorization: `Bearer ${gitlabToken}`
             }
           })
           return Promise.all(

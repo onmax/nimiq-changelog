@@ -4,9 +4,6 @@ import { icons as nimiqIcons } from 'nimiq-icons'
 import * as v from 'valibot'
 
 export default defineNuxtConfig({
-  devtools: {
-    enabled: true
-  },
 
   modules: [
     '@nuxt/eslint',
@@ -17,8 +14,40 @@ export default defineNuxtConfig({
     '@nuxt/icon',
     'nuxt-safe-runtime-config'
   ],
+  devtools: {
+    enabled: true
+  },
 
   css: ['~/assets/css/main.css'],
+
+  mdc: {
+    highlight: {
+      langs: ['diff', 'ts', 'vue', 'css', 'sh', 'js']
+    }
+  },
+
+  runtimeConfig: {
+    gitlab: {
+      token: process.env.NUXT_GITLAB_TOKEN || '',
+      projects: process.env.NUXT_GITLAB_PROJECTS || '',
+      baseUrl: process.env.NUXT_GITLAB_BASE_URL || 'https://scm.nim.team'
+    }
+  },
+
+  routeRules: {
+    '/': { isr: 60 }
+  },
+
+  compatibilityDate: '2025-06-01',
+
+  eslint: {
+    config: {
+      stylistic: {
+        commaDangle: 'never',
+        braceStyle: '1tbs'
+      }
+    }
+  },
 
   fonts: {
     families: [
@@ -36,14 +65,11 @@ export default defineNuxtConfig({
       }
     ]
   },
-
-
-  runtimeConfig: {
-    gitlab: {
-      token: process.env.NUXT_GITLAB_TOKEN || '',
-      projects: process.env.NUXT_GITLAB_PROJECTS || '',
-      baseUrl: process.env.NUXT_GITLAB_BASE_URL || 'https://scm.nim.team'
-    },
+  icon: {
+    // Helps resolve ambiguous CSS class names (runtime hint)
+    collections: ['lucide', 'simple-icons'],
+    // Register the custom Iconify collection provided by `nimiq-icons`
+    customCollections: [nimiqIcons]
   },
   safeRuntimeConfig: {
     $schema: v.object({
@@ -53,32 +79,5 @@ export default defineNuxtConfig({
         baseUrl: v.pipe(v.string(), v.url())
       })
     })
-  },
-  icon: {
-    // Helps resolve ambiguous CSS class names (runtime hint)
-    collections: ['lucide', 'simple-icons'],
-    // Register the custom Iconify collection provided by `nimiq-icons`
-    customCollections: [nimiqIcons]
-  },
-
-  mdc: {
-    highlight: {
-      langs: ['diff', 'ts', 'vue', 'css', 'sh', 'js']
-    }
-  },
-
-  routeRules: {
-    '/': { isr: 60 }
-  },
-
-  compatibilityDate: '2025-06-01',
-
-  eslint: {
-    config: {
-      stylistic: {
-        commaDangle: 'never',
-        braceStyle: '1tbs'
-      }
-    }
   }
 })
