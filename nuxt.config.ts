@@ -4,7 +4,6 @@ import { icons as nimiqIcons } from 'nimiq-icons'
 import * as v from 'valibot'
 
 export default defineNuxtConfig({
-  hub: { cache: true },
 
   modules: [
     '@nuxt/eslint',
@@ -41,6 +40,7 @@ export default defineNuxtConfig({
   },
 
   compatibilityDate: '2025-06-01',
+  hub: { cache: true },
 
   eslint: {
     config: {

@@ -1,4 +1,17 @@
-# Nuxt Changelog
+<p align="center">
+  <a href="https://github.com/onmax/nimiq-changelog" target="_blank">
+    <picture>
+      <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/onmax/nimiq-changelog/HEAD/.github/logo-dark.svg">
+      <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/onmax/nimiq-changelog/HEAD/.github/logo-light.svg">
+      <img alt="Nimiq Changelog" src="https://raw.githubusercontent.com/onmax/nimiq-changelog/HEAD/.github/logo-light.svg" width="350" height="70" style="max-width: 100%;">
+    </picture>
+  </a>
+</p>
+
+<p align="center">
+  An application to track latest changes from multiple repositories from Nimiq
+</p>
+
 
 A Nuxt 4 application that displays GitHub release changelogs from multiple repositories in a clean timeline format. Built with Nuxt UI v4 and TypeScript.
 
