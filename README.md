@@ -3,7 +3,7 @@
     <picture>
       <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/onmax/nimiq-changelog/HEAD/.github/logo-dark.svg">
       <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/onmax/nimiq-changelog/HEAD/.github/logo-light.svg">
-      <img alt="Nimiq Changelog" src="https://raw.githubusercontent.com/onmax/nimiq-changelog/HEAD/.github/logo-light.svg" width="350" height="70" style="max-width: 100%;">
+      <img alt="Nimiq Changelog" src="https://raw.githubusercontent.com/onmax/nimiq-changelog/HEAD/.github/logo-light.svg" width="334" height="42" style="max-width: 100%;">
     </picture>
   </a>
 </p>
