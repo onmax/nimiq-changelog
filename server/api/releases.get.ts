@@ -31,7 +31,7 @@ function removeDuplicateWhatsSections(body: MDCRoot): MDCRoot {
 
 export default defineCachedEventHandler(async (event) => {
   console.log('fetching releases')
-  
+
   const query = getQuery(event)
   const repoFilter = typeof query.repo === 'string' ? query.repo : ''
 
@@ -49,14 +49,14 @@ export default defineCachedEventHandler(async (event) => {
   // Filter repos if specified
   const filteredRepos = repoFilter ? REPOS.filter(repo => repo.includes(repoFilter)) : REPOS
   console.log('repoFilter:', repoFilter, 'filteredRepos:', filteredRepos)
-  
+
   // Fetch GitHub releases, fallback to tags for repos without releases
   const githubReleases: Release[] = await Promise.all(
     filteredRepos.map(async (repo) => {
       try {
         // First try to fetch releases (existing method)
         const { releases } = await $fetch<{ releases: any[] }>(`https://ungh.cc/repos/${repo}/releases`)
-        
+
         if (releases && releases.length > 0) {
           // Use existing releases method
           return Promise.all(
@@ -72,21 +72,21 @@ export default defineCachedEventHandler(async (event) => {
               }))
           )
         }
-        
+
         // Fallback: generate releases from tags
         console.log(`No releases found for ${repo}, generating from tags`)
         const tags = await $fetch<any[]>(`https://api.github.com/repos/${repo}/tags`)
         if (!tags.length) return []
-        
+
         const tagReleases: Release[] = []
-        
+
         for (let i = 0; i < Math.min(tags.length, 5); i++) { // Limit to 5 most recent tags
           const currentTag = tags[i]
           const previousTag = tags[i + 1]
-          
+
           let commits: any[] = []
-          let tagDate = currentTag.commit?.author?.date || new Date().toISOString()
-          
+          const tagDate = currentTag.commit?.author?.date || new Date().toISOString()
+
           if (previousTag) {
             // Get commits between previous tag and current tag
             try {
@@ -104,15 +104,15 @@ export default defineCachedEventHandler(async (event) => {
               console.warn(`Failed to fetch recent commits for ${repo} ${currentTag.name}:`, error)
             }
           }
-          
+
           // Generate changelog from commit messages
           const changelogItems = commits
             .filter(commit => !commit.commit.message.startsWith('chore: release'))
             .map(commit => `- ${commit.commit.message.split('\n')[0]}`)
             .join('\n')
-          
+
           const changelogMarkdown = changelogItems || '- Initial release'
-          
+
           tagReleases.push({
             url: `https://github.com/${repo}/releases/tag/${currentTag.name}`,
             repo,
@@ -122,7 +122,7 @@ export default defineCachedEventHandler(async (event) => {
             body: (await parseMarkdown(changelogMarkdown)).body
           })
         }
-        
+
         return tagReleases
       } catch (error) {
         console.warn(`Failed to fetch releases/tags for ${repo}:`, error)
@@ -176,9 +176,9 @@ export default defineCachedEventHandler(async (event) => {
   )
 
   const allReleases = [...githubReleases, ...gitlabReleases, ...formattedNimiqReleases]
-  
+
   // Apply repo filter to final results if specified
-  const finalResults = repoFilter 
+  const finalResults = repoFilter
     ? allReleases.filter(release => release.repo.includes(repoFilter))
     : allReleases
 
