@@ -4,6 +4,17 @@
 export function parseCommitMessage(message: string, repo: string): string {
   let parsed = message
 
+  // Replace GitHub PR/issue URLs with short references if they match the current repo
+  parsed = parsed.replace(
+    /https:\/\/github\.com\/([^\/]+\/[^\/]+)\/(?:pull|issues)\/(\d+)/g,
+    (match, urlRepo, number) => {
+      if (urlRepo === repo) {
+        return `[#${number}](${match})`
+      }
+      return match // Keep the full URL if it's from a different repo
+    }
+  )
+
   // Replace issue/PR references (#123, fixes #456, closes #789, etc.)
   parsed = parsed.replace(
     /(?:^|\s)((?:fix(?:es)?|close(?:s)?|resolve(?:s)?)\s+)?#(\d+)(?=\s|$|[.,!?])/gi,
@@ -33,6 +44,15 @@ export function parseCommitMessage(message: string, repo: string): string {
       const shortSha = sha.substring(0, 8)
       const replacement = `[\`${shortSha}\`](${baseUrl}/commit/${sha})`
       return match.replace(sha, replacement)
+    }
+  )
+
+  // Replace user mentions (@username)
+  parsed = parsed.replace(
+    /(?:^|\s)@([a-zA-Z0-9](?:[a-zA-Z0-9]|-(?=[a-zA-Z0-9])){0,38})(?=\s|$|[.,!?])/g,
+    (match, username) => {
+      const replacement = `[@${username}](https://github.com/${username})`
+      return match.replace(`@${username}`, replacement)
     }
   )
 
