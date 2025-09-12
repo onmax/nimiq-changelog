@@ -109,7 +109,7 @@ export default defineCachedEventHandler(async (event) => {
           // Generate changelog from commit messages
           const changelogItems = commits
             .filter(commit => !commit.commit.message.startsWith('chore: release'))
-            .map(commit => {
+            .map((commit) => {
               const firstLine = commit.commit.message.split('\n')[0]
               const parsed = parseCommitMessage(firstLine, repo)
               return `- ${parsed}`
