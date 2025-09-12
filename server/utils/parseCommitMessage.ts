@@ -6,7 +6,7 @@ export function parseCommitMessage(message: string, repo: string): string {
 
   // Replace GitHub PR/issue URLs with short references if they match the current repo
   parsed = parsed.replace(
-    /https:\/\/github\.com\/([^\/]+\/[^\/]+)\/(?:pull|issues)\/(\d+)/g,
+    /https:\/\/github\.com\/([^/]+\/[^/]+)\/(?:pull|issues)\/(\d+)/g,
     (match, urlRepo, number) => {
       if (urlRepo === repo) {
         return `[#${number}](${match})`
