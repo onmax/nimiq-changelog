@@ -23,6 +23,28 @@ https://nimiq-changelog.je-cf9.workers.dev/
 - Expandable/collapsible release bodies
 - Server-side caching for performance
 - Responsive design with Nuxt UI components
+- API filtering support
+
+## API
+
+The changelog provides a simple REST API to fetch release data:
+
+### Get All Releases
+
+```bash
+GET /api/releases
+```
+
+### Filter by Repository
+
+Filter releases by repository name using the `repo` query parameter:
+
+```bash
+GET /api/releases?repo=nimiq-mcp
+GET /api/releases?repo=albatross-rpc
+```
+
+The API returns up to 35 releases sorted by date (newest first). Repository filtering uses partial matching on the repository name.
 
 
 ## Setup

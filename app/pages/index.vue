@@ -30,7 +30,10 @@ const { data: releases } = await useFetch(`/api/releases`, {
           : release.repo === 'nimiq/wallet' ? 'Wallet'
             : release.repo === 'nimiq/keyguard' ? 'Keyguard'
               : release.repo === 'nimiq/hub' ? 'Hub'
-                : release.repo === 'nimiq/pay-app' ? 'Nimiq Pay' : release.repo,
+                : release.repo === 'nimiq/pay-app' ? 'Nimiq Pay'
+                  : release.repo === 'onmax/nimiq-mcp' ? 'Nimiq MCP'
+                    : release.repo === 'onmax/albatross-rpc-client-ts' ? 'Albatross RPC TS Client'
+                      : release.repo,
         variant: 'outline',
         color: 'primary'
       }"
