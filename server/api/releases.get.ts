@@ -3,7 +3,9 @@ import type { MDCRoot } from '@nuxtjs/mdc'
 import type { Release } from '../../shared/types/releases'
 
 const REPOS = [
-  'nimiq/core-rs-albatross'
+  'nimiq/core-rs-albatross',
+  'onmax/nimiq-mcp',
+  'onmax/albatross-rpc-client-ts'
 ]
 
 const NIMIQ_FRONTEND_URL = 'https://nimiq-frontend-release-notes.netlify.app/mainnet_releases.json'
