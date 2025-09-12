@@ -63,7 +63,7 @@ export default defineCachedEventHandler(async (event) => {
           return Promise.all(
             releases
               .filter(r => r.draft === false)
-              .map(async release => {
+              .map(async (release) => {
                 // Parse the markdown content to enhance with links
                 const parsedMarkdown = parseCommitMessage(release.markdown, repo)
                 return {
