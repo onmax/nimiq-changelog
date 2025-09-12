@@ -85,17 +85,9 @@ useSeoMeta({
 </template>
 
 <style>
-/* Style links within changelog content */
-/* Target links inside the changelog version bodies */
-main :not(h1,h2,h3,h4) a {
-  color: var(--color-blue-500);
-  font-weight: 600;
-}
-
-/* More specific targeting for MDC rendered content */
 [data-mdc] :not(h1,h2,h3,h4) a,
 .prose :not(h1,h2,h3,h4) a {
-  color: var(--color-blue-500);
+  color: var(--colors-blue);
   font-weight: 600;
 }
 </style>
