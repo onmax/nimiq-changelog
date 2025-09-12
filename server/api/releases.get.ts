@@ -2,6 +2,7 @@ import { parseMarkdown } from '@nuxtjs/mdc/runtime'
 import type { MDCRoot } from '@nuxtjs/mdc'
 import type { Release } from '../../shared/types/releases'
 import { getQuery } from 'h3'
+import { parseCommitMessage } from '../utils/parseCommitMessage'
 
 const REPOS = [
   'nimiq/core-rs-albatross',
@@ -108,7 +109,11 @@ export default defineCachedEventHandler(async (event) => {
           // Generate changelog from commit messages
           const changelogItems = commits
             .filter(commit => !commit.commit.message.startsWith('chore: release'))
-            .map(commit => `- ${commit.commit.message.split('\n')[0]}`)
+            .map(commit => {
+              const firstLine = commit.commit.message.split('\n')[0]
+              const parsed = parseCommitMessage(firstLine, repo)
+              return `- ${parsed}`
+            })
             .join('\n')
 
           const changelogMarkdown = changelogItems || '- Initial release'
