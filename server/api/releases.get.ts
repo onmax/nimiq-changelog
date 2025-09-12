@@ -189,5 +189,5 @@ export default defineCachedEventHandler(async (event) => {
 
   return finalResults.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).slice(0, 35)
 }, {
-  maxAge: 60
+  maxAge: process.env.NODE_ENV === 'development' ? 0 : 60
 })
