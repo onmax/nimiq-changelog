@@ -3,6 +3,7 @@ import type { MDCRoot } from '@nuxtjs/mdc'
 import type { Release } from '../../shared/types/releases'
 import { getQuery } from 'h3'
 import { parseCommitMessage } from '../utils/parseCommitMessage'
+import { groupCommits, groupedCommitsToMarkdown } from '../utils/groupCommits'
 
 const REPOS = [
   'nimiq/core-rs-albatross',
@@ -111,16 +112,18 @@ export default defineCachedEventHandler(async (event) => {
           }
 
           // Generate changelog from commit messages
-          const changelogItems = commits
+          const commitMessages = commits
             .filter(commit => !commit.commit.message.startsWith('chore: release'))
             .map((commit) => {
               const firstLine = commit.commit.message.split('\n')[0]
-              const parsed = parseCommitMessage(firstLine, repo)
-              return `- ${parsed}`
+              return parseCommitMessage(firstLine, repo)
             })
-            .join('\n')
 
-          const changelogMarkdown = changelogItems || '- Initial release'
+          // Group commits by conventional prefixes
+          const grouped = groupCommits(commitMessages)
+          const changelogMarkdown = grouped.ungrouped.length > 0 || grouped.groups.length > 0
+            ? groupedCommitsToMarkdown(grouped)
+            : '- Initial release'
 
           tagReleases.push({
             url: `https://github.com/${repo}/releases/tag/${currentTag.name}`,
