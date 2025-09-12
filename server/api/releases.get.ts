@@ -59,18 +59,22 @@ export default defineCachedEventHandler(async (event) => {
         const { releases } = await $fetch<{ releases: any[] }>(`https://ungh.cc/repos/${repo}/releases`)
 
         if (releases && releases.length > 0) {
-          // Use existing releases method
+          // Use existing releases method but also parse the content for links
           return Promise.all(
             releases
               .filter(r => r.draft === false)
-              .map(async release => ({
-                url: `https://github.com/${repo}/releases/tag/${release.tag}`,
-                repo,
-                tag: release.tag,
-                title: release.name || release.tag,
-                date: release.publishedAt,
-                body: removeDuplicateWhatsSections((await parseMarkdown(release.markdown)).body)
-              }))
+              .map(async release => {
+                // Parse the markdown content to enhance with links
+                const parsedMarkdown = parseCommitMessage(release.markdown, repo)
+                return {
+                  url: `https://github.com/${repo}/releases/tag/${release.tag}`,
+                  repo,
+                  tag: release.tag,
+                  title: release.name || release.tag,
+                  date: release.publishedAt,
+                  body: removeDuplicateWhatsSections((await parseMarkdown(parsedMarkdown)).body)
+                }
+              })
           )
         }
 

@@ -83,3 +83,19 @@ useSeoMeta({
     </div>
   </UApp>
 </template>
+
+<style>
+/* Style links within changelog content */
+/* Target links inside the changelog version bodies */
+main a {
+  color: var(--color-blue-500);
+  font-weight: 600;
+}
+
+/* More specific targeting for MDC rendered content */
+[data-mdc] a,
+.prose a {
+  color: var(--color-blue-500);
+  font-weight: 600;
+}
+</style>
