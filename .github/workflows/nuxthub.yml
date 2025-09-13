@@ -31,3 +31,7 @@ jobs:
         uses: nuxt-hub/action@v2
         with:
           project-key: nimiq-changelog-tiqj
+        env:
+          NUXT_WEBHOOK_SECRET: ${{ secrets.WEBHOOK_SECRET }}
+          NUXT_OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          NUXT_SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}

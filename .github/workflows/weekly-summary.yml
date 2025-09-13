@@ -1,0 +1,57 @@
+name: Weekly Summary
+
+on:
+  schedule:
+    - cron: '0 15 * * 5' # Runs Fridays at 3pm UTC
+  workflow_dispatch: # Allows manual triggering of the workflow
+
+jobs:
+  weekly-summary:
+    name: "Generate Weekly Summary"
+    runs-on: ubuntu-latest
+    continue-on-error: false
+
+    steps:
+      - name: Generate and send weekly summary
+        env:
+          WEBHOOK_SECRET: ${{ secrets.WEBHOOK_SECRET }}
+        run: |
+          set -eo pipefail
+          echo "🔄 Generating weekly summary..."
+
+          # Get the production URL from NuxtHub deployment
+          ENDPOINT="https://nimiq-changelog.je-cf9.workers.dev"
+
+          # Call the weekly summary endpoint with authentication
+          resp=$(curl -sS -w "HTTPSTATUS:%{http_code}" \
+            -X POST \
+            -H "Authorization: Bearer $WEBHOOK_SECRET" \
+            -H "Content-Type: application/json" \
+            "$ENDPOINT/api/weekly-summary")
+
+          body=${resp%HTTPSTATUS:*}
+          status=${resp##*HTTPSTATUS:}
+
+          echo "HTTP status: $status"
+          echo "$body"
+
+          # Any non-200 is a failure
+          if [[ "$status" -ne 200 ]]; then
+            echo "❌ HTTP $status returned"
+            exit 1
+          fi
+
+          # Check for JSON error field
+          if echo "$body" | jq -e 'has("error")' >/dev/null 2>&1; then
+            echo "❌ Server error:" $(echo "$body" | jq -r '.error')
+            exit 1
+          fi
+
+          # Parse success response
+          if echo "$body" | jq -e '.success == true' >/dev/null 2>&1; then
+            releaseCount=$(echo "$body" | jq -r '.releaseCount // 0')
+            echo "✅ Weekly summary generated successfully ($releaseCount releases)"
+          else
+            echo "❌ Summary generation failed"
+            exit 1
+          fi

@@ -56,7 +56,10 @@ export default defineNuxtConfig({
       token: process.env.NUXT_GITLAB_TOKEN || '',
       projects: process.env.NUXT_GITLAB_PROJECTS || '',
       baseUrl: process.env.NUXT_GITLAB_BASE_URL || 'https://scm.nim.team'
-    }
+    },
+    webhookSecret: process.env.NUXT_WEBHOOK_SECRET || '',
+    openaiApiKey: process.env.NUXT_OPENAI_API_KEY || '',
+    slackWebhookUrl: process.env.NUXT_SLACK_WEBHOOK_URL || ''
   },
 
   routeRules: {
@@ -66,7 +69,10 @@ export default defineNuxtConfig({
   },
 
   compatibilityDate: '2025-06-01',
-  hub: { cache: true },
+  hub: {
+    cache: true,
+    kv: true
+  },
 
   eslint: {
     config: {
@@ -105,7 +111,10 @@ export default defineNuxtConfig({
         token: v.string(),
         projects: v.string(),
         baseUrl: v.pipe(v.string(), v.url())
-      })
+      }),
+      webhookSecret: v.string(),
+      openaiApiKey: v.string(),
+      slackWebhookUrl: v.pipe(v.string(), v.url())
     })
   }
 })
