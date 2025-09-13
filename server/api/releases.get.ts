@@ -4,6 +4,32 @@ import type { Release } from '../../shared/types/releases'
 import { getQuery } from 'h3'
 import { parseCommitMessage } from '../utils/parseCommitMessage'
 import { groupCommits, groupedCommitsToMarkdown } from '../utils/groupCommits'
+import { extractCommitMessages } from '../utils/extractCommitMessages'
+
+/**
+ * Process release body and create grouped changelog
+ */
+async function processReleaseBody(bodyContent: string, repo: string): Promise<MDCRoot> {
+  const body = (await parseMarkdown(bodyContent)).body
+
+  // Extract commit messages from the structured body
+  const commitMessages = extractCommitMessages(body)
+
+  if (commitMessages.length > 0) {
+    // Parse and group the commit messages
+    const parsedMessages = commitMessages.map(msg => parseCommitMessage(msg, repo))
+    const grouped = groupCommits(parsedMessages)
+
+    // Generate grouped markdown if we have content
+    if (grouped.ungrouped.length > 0 || grouped.groups.length > 0) {
+      const groupedMarkdown = groupedCommitsToMarkdown(grouped)
+      // Parse the grouped markdown back to MDCRoot
+      return (await parseMarkdown(groupedMarkdown)).body
+    }
+  }
+
+  return body
+}
 
 const REPOS = [
   'nimiq/core-rs-albatross',
@@ -67,13 +93,14 @@ export default defineCachedEventHandler(async (event) => {
               .map(async (release) => {
                 // Parse the markdown content to enhance with links
                 const parsedMarkdown = parseCommitMessage(release.markdown, repo)
+                const body = await processReleaseBody(parsedMarkdown, repo)
                 return {
                   url: `https://github.com/${repo}/releases/tag/${release.tag}`,
                   repo,
                   tag: release.tag,
                   title: release.name || release.tag,
                   date: release.publishedAt,
-                  body: removeDuplicateWhatsSections((await parseMarkdown(parsedMarkdown)).body)
+                  body: removeDuplicateWhatsSections(body)
                 }
               })
           )
@@ -125,13 +152,14 @@ export default defineCachedEventHandler(async (event) => {
             ? groupedCommitsToMarkdown(grouped)
             : '- Initial release'
 
+          const body = await processReleaseBody(changelogMarkdown, repo)
           tagReleases.push({
             url: `https://github.com/${repo}/releases/tag/${currentTag.name}`,
             repo,
             tag: currentTag.name,
             title: currentTag.name,
             date: tagDate,
-            body: (await parseMarkdown(changelogMarkdown)).body
+            body
           })
         }
 
@@ -155,14 +183,28 @@ export default defineCachedEventHandler(async (event) => {
             }
           })
           return Promise.all(
-            releases.map(async release => ({
-              url: `${gitlabBaseUrl}/${project.name}/-/releases/${release.tag_name}`,
-              repo: project.name || 'unknown',
-              tag: release.tag_name,
-              title: release.name || release.tag_name,
-              date: release.released_at,
-              body: release.description ? (await parseMarkdown(release.description)).body : { type: 'root' as const, children: [] }
-            }))
+            releases.map(async (release) => {
+              if (release.description) {
+                const body = await processReleaseBody(release.description, project.name || 'unknown')
+                return {
+                  url: `${gitlabBaseUrl}/${project.name}/-/releases/${release.tag_name}`,
+                  repo: project.name || 'unknown',
+                  tag: release.tag_name,
+                  title: release.name || release.tag_name,
+                  date: release.released_at,
+                  body
+                }
+              } else {
+                return {
+                  url: `${gitlabBaseUrl}/${project.name}/-/releases/${release.tag_name}`,
+                  repo: project.name || 'unknown',
+                  tag: release.tag_name,
+                  title: release.name || release.tag_name,
+                  date: release.released_at,
+                  body: { type: 'root' as const, children: [] }
+                }
+              }
+            })
           )
         })
       ).then(results => results.flat())
@@ -177,14 +219,17 @@ export default defineCachedEventHandler(async (event) => {
   // Fetch Nimiq frontend releases
   const nimiqReleases: any[] = await $fetch<any[]>(NIMIQ_FRONTEND_URL)
   const formattedNimiqReleases: Release[] = await Promise.all(
-    nimiqReleases.map(async release => ({
-      url: '#', // No direct URL available for these releases
-      repo: `nimiq/${release.app.toLowerCase()}`,
-      tag: release.version,
-      title: release.version,
-      date: release.date,
-      body: (await parseMarkdown(release.message)).body
-    }))
+    nimiqReleases.map(async (release) => {
+      const body = await processReleaseBody(release.message, `nimiq/${release.app.toLowerCase()}`)
+      return {
+        url: '#', // No direct URL available for these releases
+        repo: `nimiq/${release.app.toLowerCase()}`,
+        tag: release.version,
+        title: release.version,
+        date: release.date,
+        body
+      }
+    })
   )
 
   const allReleases = [...githubReleases, ...gitlabReleases, ...formattedNimiqReleases]
