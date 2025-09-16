@@ -68,12 +68,14 @@ export default defineEventHandler(async (event) => {
         throw new Error('Invalid releases data format received')
       }
 
-      // Filter releases from the last 7 days
+      // Filter releases from the last 7 days and exclude onmax repositories
       recentReleases = allReleases.filter((release) => {
         try {
           const releaseDate = new Date(release.date)
           const cutoffDate = new Date(sevenDaysAgo)
-          return releaseDate >= cutoffDate && !isNaN(releaseDate.getTime())
+          const isInTimeRange = releaseDate >= cutoffDate && !isNaN(releaseDate.getTime())
+          const isNotOnmaxRepo = !release.repo.includes('onmax/')
+          return isInTimeRange && isNotOnmaxRepo
         } catch {
           consola.warn(`Invalid date format for release: ${release.tag}`)
           return false
