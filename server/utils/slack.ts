@@ -1,6 +1,6 @@
 import process from 'node:process'
 import { consola } from 'consola'
-import { isDevelopment, isProduction } from 'std-env'
+import { isProduction } from 'std-env'
 
 interface SlackMessage {
   text: string
@@ -56,23 +56,4 @@ export async function sendSlackNotification(options: SlackNotificationOptions): 
   } catch (error) {
     consola.error('Failed to send Slack notification:', error)
   }
-}
-
-// Specific notification functions for weekly summary scenarios
-export async function sendWeeklySummarySuccessNotification(
-  releaseCount: number,
-  summaryPreview: string
-): Promise<void> {
-  await sendSlackNotification({
-    message: `📝 Weekly changelog summary generated successfully with ${releaseCount} releases`
-  })
-}
-
-export async function sendWeeklySummaryFailureNotification(
-  error: any,
-  step?: string
-): Promise<void> {
-  await sendSlackNotification({
-    message: `🚨 Weekly changelog summary generation failed${step ? ` during ${step}` : ''}: ${error?.message || error}`
-  })
 }
