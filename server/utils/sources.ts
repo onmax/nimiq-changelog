@@ -1,39 +1,11 @@
 import type { Release } from '../../shared/types/releases'
-import type { SourceConfig, SourceMetadata } from './sources/types'
-import { fetchGitHubReleases } from './sources/github'
-import { fetchGitLabReleases } from './sources/gitlab'
-import { fetchNpmReleases } from './sources/npm'
-import { fetchNimiqFrontendReleases } from './sources/nimiq-frontend'
-
-// Source registry
-export const sources: Record<string, SourceMetadata> = {
-  'github': {
-    name: 'GitHub',
-    description: 'Fetch releases and tags from GitHub repositories',
-    fetcher: fetchGitHubReleases
-  },
-  'gitlab': {
-    name: 'GitLab',
-    description: 'Fetch releases from GitLab projects',
-    fetcher: fetchGitLabReleases
-  },
-  'npm': {
-    name: 'NPM',
-    description: 'Fetch package versions from NPM registry',
-    fetcher: fetchNpmReleases
-  },
-  'nimiq-frontend': {
-    name: 'Nimiq Frontend',
-    description: 'Fetch releases from Nimiq frontend applications',
-    fetcher: fetchNimiqFrontendReleases
-  }
-}
+import { sources } from './sourceRegistry'
 
 export interface AllSourcesConfig {
-  'github': SourceConfig
-  'gitlab': SourceConfig
-  'npm': SourceConfig
-  'nimiq-frontend': SourceConfig
+  github: { enabled: boolean; repos?: string[] }
+  gitlab: { enabled: boolean; projects?: string; baseUrl?: string; token?: string }
+  npm: { enabled: boolean; packages?: string[] }
+  nimiqFrontend: { enabled: boolean }
 }
 
 export async function fetchAllReleases(
@@ -42,9 +14,19 @@ export async function fetchAllReleases(
 ): Promise<Release[]> {
   const allReleases: Release[] = []
 
+  // Map camelCase config keys to kebab-case source keys
+  const sourceKeyMap = {
+    'github': 'github',
+    'gitlab': 'gitlab',
+    'npm': 'npm',
+    'nimiq-frontend': 'nimiqFrontend'
+  } as const
+
   // Fetch from all enabled sources in parallel
   const sourcePromises = Object.entries(sources).map(async ([sourceKey, sourceMeta]) => {
-    const config = configs[sourceKey as keyof AllSourcesConfig]
+    const configKey = Object.entries(sourceKeyMap).find(([k, v]) => k === sourceKey)?.[1]
+    const config = configKey ? configs[configKey as keyof AllSourcesConfig] : undefined
+
     if (config?.enabled) {
       try {
         const releases = await sourceMeta.fetcher(config, repoFilter)
@@ -71,13 +53,3 @@ export async function fetchAllReleases(
     .slice(0, 35)
 }
 
-// Export individual fetchers for direct use
-export {
-  fetchGitHubReleases,
-  fetchGitLabReleases,
-  fetchNpmReleases,
-  fetchNimiqFrontendReleases
-}
-
-// Export types
-export type { SourceConfig, SourceMetadata } from './sources/types'

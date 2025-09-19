@@ -31,13 +31,26 @@ async function processReleaseBody(bodyContent: string, repo: string) {
 export async function fetchGitLabReleases(config: SourceConfig, repoFilter?: string): Promise<Release[]> {
   if (!config.enabled || !config.token || !config.projects || !config.baseUrl) {
     if (!config.token) console.warn('GitLab token not configured, skipping GitLab releases')
-    if (!config.projects?.length) console.warn('No GitLab projects configured, skipping GitLab releases')
+    if (!config.projects) console.warn('No GitLab projects configured, skipping GitLab releases')
+    return []
+  }
+
+  // Parse GitLab projects from config (handle both string and array formats)
+  const projects = typeof config.projects === 'string'
+    ? config.projects.split(',').map((project) => {
+        const [id, name] = project.split(':')
+        return { id: id || '', name: name || '' }
+      }).filter(p => p.id && p.name)
+    : config.projects
+
+  if (!projects.length) {
+    console.warn('No valid GitLab projects found after parsing')
     return []
   }
 
   try {
     const releases: Release[] = await Promise.all(
-      config.projects.map(async (project) => {
+      projects.map(async (project) => {
         const releases = await universalFetch<any[]>(`${config.baseUrl}/api/v4/projects/${project.id}/releases`, {
           headers: {
             Authorization: `Bearer ${config.token}`

@@ -3,7 +3,7 @@ import type { Release } from '../../../shared/types/releases'
 export interface SourceConfig {
   enabled: boolean
   repos?: string[]
-  projects?: Array<{ id: string, name: string }>
+  projects?: string | Array<{ id: string, name: string }>
   packages?: string[]
   baseUrl?: string
   token?: string

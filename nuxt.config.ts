@@ -59,7 +59,32 @@ export default defineNuxtConfig({
     },
     webhookSecret: process.env.NUXT_WEBHOOK_SECRET || '',
     openaiApiKey: process.env.NUXT_OPENAI_API_KEY || '',
-    slackWebhookUrl: process.env.NUXT_SLACK_WEBHOOK_URL || ''
+    slackWebhookUrl: process.env.NUXT_SLACK_WEBHOOK_URL || '',
+    sources: {
+      github: {
+        enabled: true,
+        repos: [
+          'nimiq/core-rs-albatross',
+          'onmax/nimiq-mcp',
+          'onmax/albatross-rpc-client-ts'
+        ]
+      },
+      gitlab: {
+        enabled: !!(process.env.NUXT_GITLAB_TOKEN && process.env.NUXT_GITLAB_PROJECTS),
+        projects: process.env.NUXT_GITLAB_PROJECTS || '',
+        baseUrl: process.env.NUXT_GITLAB_BASE_URL || 'https://scm.nim.team',
+        token: process.env.NUXT_GITLAB_TOKEN || ''
+      },
+      npm: {
+        enabled: true,
+        packages: [
+          '@nimiq/utils'
+        ]
+      },
+      nimiqFrontend: {
+        enabled: true
+      }
+    }
   },
 
   routeRules: {
