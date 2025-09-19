@@ -2,9 +2,9 @@ import type { Release } from '../../shared/types/releases'
 import { sources } from './sourceRegistry'
 
 export interface AllSourcesConfig {
-  github: { enabled: boolean; repos?: string[] }
-  gitlab: { enabled: boolean; projects?: string; baseUrl?: string; token?: string }
-  npm: { enabled: boolean; packages?: string[] }
+  github: { enabled: boolean, repos?: string[] }
+  gitlab: { enabled: boolean, projects?: string, baseUrl?: string, token?: string }
+  npm: { enabled: boolean, packages?: string[] }
   nimiqFrontend: { enabled: boolean }
 }
 
@@ -24,7 +24,7 @@ export async function fetchAllReleases(
 
   // Fetch from all enabled sources in parallel
   const sourcePromises = Object.entries(sources).map(async ([sourceKey, sourceMeta]) => {
-    const configKey = Object.entries(sourceKeyMap).find(([k, v]) => k === sourceKey)?.[1]
+    const configKey = Object.entries(sourceKeyMap).find(([k, _v]) => k === sourceKey)?.[1]
     const config = configKey ? configs[configKey as keyof AllSourcesConfig] : undefined
 
     if (config?.enabled) {
@@ -52,4 +52,3 @@ export async function fetchAllReleases(
     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
     .slice(0, 35)
 }
-
