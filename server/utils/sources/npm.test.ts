@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { fetchNpmReleases } from '../../server/utils/sources/npm'
+import { fetchNpmReleases } from './npm'
 
 describe('NPM Source - Real Data', () => {
   it('should fetch real NPM package releases for @nimiq/utils', async () => {

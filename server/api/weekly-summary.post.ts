@@ -35,6 +35,22 @@ function getDateSevenDaysAgo(): string {
   return date.toISOString()
 }
 
+function getCurrentWeekNumber(): number {
+  const now = new Date()
+  const start = new Date(now.getFullYear(), 0, 1)
+  const days = Math.floor((now.getTime() - start.getTime()) / (24 * 60 * 60 * 1000))
+  return Math.ceil((days + start.getDay() + 1) / 7)
+}
+
+function getCurrentDateInfo() {
+  const now = new Date()
+  return {
+    weekNumber: getCurrentWeekNumber(),
+    year: now.getFullYear(),
+    date: now.toISOString().split('T')[0]
+  }
+}
+
 export default defineEventHandler(async (event) => {
   const startTime = Date.now()
 
@@ -94,12 +110,11 @@ export default defineEventHandler(async (event) => {
 
     // Handle case with no releases
     if (recentReleases.length === 0) {
-      const message = 'This week in Nimiq: Crickets. Not even the bugs bothered showing up. Everyone\'s apparently taking a well-deserved break from shipping. The calm before the storm, or just peak efficiency? You decide.'
+      const dateInfo = getCurrentDateInfo()
+      const message = `This is week number ${dateInfo.weekNumber}, and this has been the last week's news: Crickets. Not even the bugs bothered showing up. Everyone's apparently taking a well-deserved break from shipping. The calm before the storm, or just peak efficiency? You decide.`
 
       try {
-        await sendWeeklySummarySuccessNotification(0, message)
-
-        // Still send to Slack even with no releases
+        // Send directly to Slack without success notification
         const { slackWebhookUrl } = useRuntimeConfig()
         if (slackWebhookUrl) {
           await $fetch(slackWebhookUrl, {
@@ -136,13 +151,14 @@ export default defineEventHandler(async (event) => {
     let summary: string
     try {
       consola.info('Generating AI summary...')
+      const dateInfo = getCurrentDateInfo()
       const response = await generateText({
         model: openai('gpt-4-turbo'),
         system: SYSTEM_PROMPT,
         messages: [
           {
             role: 'user',
-            content: `Here are the releases from this week:\n\n${formattedReleases}`
+            content: `Current week: ${dateInfo.weekNumber} of ${dateInfo.year} (${dateInfo.date})\n\nHere are the releases from this week:\n\n${formattedReleases}`
           }
         ]
       })
@@ -159,16 +175,15 @@ export default defineEventHandler(async (event) => {
 
       // Fallback to simple summary
       consola.info('Attempting fallback summary generation...')
+      const dateInfo = getCurrentDateInfo()
       const repoNames = [...new Set(recentReleases.map(r => r.repo.split('/').pop()))]
-      summary = `This week in Nimiq: ${recentReleases.length} releases across ${repoNames.join(', ')}. The team's been busy shipping updates while I was having technical difficulties crafting witty commentary. Sometimes the robots need a coffee break too.`
+      summary = `This is week number ${dateInfo.weekNumber}, and this has been the last week's news: ${recentReleases.length} releases across ${repoNames.join(', ')}. The team's been busy shipping updates while I was having technical difficulties crafting witty commentary. Sometimes the robots need a coffee break too.`
 
       await sendWeeklySummaryFailureNotification(aiError, 'AI generation (used fallback)')
     }
 
-    // Send success notification and summary to Slack
+    // Send summary to Slack
     try {
-      await sendWeeklySummarySuccessNotification(recentReleases.length, summary)
-
       const { slackWebhookUrl } = useRuntimeConfig()
       if (slackWebhookUrl) {
         await $fetch(slackWebhookUrl, {

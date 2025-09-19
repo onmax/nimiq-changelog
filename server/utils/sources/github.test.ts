@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { fetchGitHubReleases } from '../../server/utils/sources/github'
+import { fetchGitHubReleases } from './github'
 
 describe('GitHub Source - Real Data', () => {
   it('should fetch real GitHub releases', async () => {

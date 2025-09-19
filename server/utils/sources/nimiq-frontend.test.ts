@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { fetchNimiqFrontendReleases } from '../../server/utils/sources/nimiq-frontend'
+import { fetchNimiqFrontendReleases } from './nimiq-frontend'
 
 describe('Nimiq Frontend Source - Real Data', () => {
   it('should fetch real Nimiq frontend releases', async () => {
