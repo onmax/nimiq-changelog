@@ -2,6 +2,30 @@ import { generateText } from 'ai'
 import { openai } from '@ai-sdk/openai'
 import { sendSlackNotification } from '../utils/slack'
 import { SYSTEM_PROMPT } from '../utils/systemPrompt'
+import type { MDCRoot, MDCNode } from '@nuxtjs/mdc'
+
+/**
+ * Convert MDCRoot to plain text
+ */
+function mdcToText(mdc: MDCRoot): string {
+  if (!mdc || !mdc.children) return ''
+
+  function extractText(nodes: MDCNode[]): string[] {
+    const texts: string[] = []
+
+    for (const node of nodes) {
+      if (node.type === 'text' && 'value' in node && node.value) {
+        texts.push(node.value.trim())
+      } else if (node.type === 'element' && 'children' in node && node.children) {
+        texts.push(...extractText(node.children))
+      }
+    }
+
+    return texts.filter(text => text.length > 0)
+  }
+
+  return extractText(mdc.children).join(' ').trim()
+}
 
 export default defineEventHandler(async () => {
   // Get releases from last 7 days
@@ -32,7 +56,7 @@ export default defineEventHandler(async () => {
 
   // Format releases for LLM
   const formattedReleases = recentReleases
-    .map(release => `${release.repo} ${release.tag}: ${release.body}`)
+    .map(release => `${release.repo} ${release.tag}: ${mdcToText(release.body)}`)
     .join('\n\n')
 
   // Build context with previous weeks
