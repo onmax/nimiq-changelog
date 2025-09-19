@@ -58,8 +58,7 @@ export default defineNuxtConfig({
       baseUrl: process.env.NUXT_GITLAB_BASE_URL || 'https://scm.nim.team'
     },
     webhookSecret: process.env.NUXT_WEBHOOK_SECRET || '',
-    openaiApiKey: process.env.NUXT_OPENAI_API_KEY || '',
-    slackWebhookUrl: process.env.NUXT_SLACK_WEBHOOK_URL || '',
+    slackWebhookUrl: process.env.NUXT_SLACK_WEBHOOK_URL,
     sources: {
       github: {
         enabled: true,
@@ -138,8 +137,26 @@ export default defineNuxtConfig({
         baseUrl: v.pipe(v.string(), v.url())
       }),
       webhookSecret: v.string(),
-      openaiApiKey: v.string(),
-      slackWebhookUrl: v.pipe(v.string(), v.url())
+      slackWebhookUrl: v.pipe(v.string(), v.minLength(1, 'NUXT_SLACK_WEBHOOK_URL is required'), v.url()),
+      sources: v.object({
+        github: v.object({
+          enabled: v.boolean(),
+          repos: v.array(v.string())
+        }),
+        gitlab: v.object({
+          enabled: v.boolean(),
+          projects: v.string(),
+          baseUrl: v.pipe(v.string(), v.url()),
+          token: v.string()
+        }),
+        npm: v.object({
+          enabled: v.boolean(),
+          packages: v.array(v.string())
+        }),
+        nimiqFrontend: v.object({
+          enabled: v.boolean()
+        })
+      })
     })
   }
 })

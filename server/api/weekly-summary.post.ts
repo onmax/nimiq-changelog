@@ -1,235 +1,66 @@
 import { generateText } from 'ai'
 import { openai } from '@ai-sdk/openai'
-import { consola } from 'consola'
-import { sendWeeklySummarySuccessNotification, sendWeeklySummaryFailureNotification } from '../utils/slack'
+import { sendSlackNotification } from '../utils/slack'
 import { SYSTEM_PROMPT } from '../utils/systemPrompt'
 
-interface Release {
-  url: string
-  repo: string
-  tag: string
-  title: string
-  date: string
-  body: any
-}
+export default defineEventHandler(async () => {
+  // Get releases from last 7 days
+  const sevenDaysAgo = new Date()
+  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7)
 
-function formatReleaseForAI(release: Release): string {
-  // Extract text content from MDC body structure
-  const extractText = (node: any): string => {
-    if (!node) return ''
-    if (typeof node === 'string') return node
-    if (node.type === 'text') return node.value || ''
-    if (node.children && Array.isArray(node.children)) {
-      return node.children.map(extractText).join(' ')
-    }
-    return ''
-  }
+  const allReleases = await $fetch('/api/releases')
+  const recentReleases = allReleases.filter(release =>
+    new Date(release.date) >= sevenDaysAgo && !release.repo.includes('onmax/')
+  )
 
-  const bodyText = extractText(release.body)
-  return `${release.repo} ${release.tag}: ${bodyText.substring(0, 300)}...`
-}
-
-function getDateSevenDaysAgo(): string {
-  const date = new Date()
-  date.setDate(date.getDate() - 7)
-  return date.toISOString()
-}
-
-function getCurrentWeekNumber(): number {
+  // Get current week number
   const now = new Date()
   const start = new Date(now.getFullYear(), 0, 1)
   const days = Math.floor((now.getTime() - start.getTime()) / (24 * 60 * 60 * 1000))
-  return Math.ceil((days + start.getDay() + 1) / 7)
-}
+  const weekNumber = Math.ceil((days + start.getDay() + 1) / 7)
 
-function getCurrentDateInfo() {
-  const now = new Date()
-  return {
-    weekNumber: getCurrentWeekNumber(),
-    year: now.getFullYear(),
-    date: now.toISOString().split('T')[0]
+  // Get previous weeks' summaries for context (last 4 weeks)
+  const previousSummaries = []
+  for (let i = 1; i <= 4; i++) {
+    const prevWeek = weekNumber - i
+    const key = `weekly-summary-${now.getFullYear()}-${prevWeek}`
+    const prevSummary = await hubKV().get(key)
+    if (prevSummary) {
+      previousSummaries.push(`Week ${prevWeek}: ${prevSummary}`)
+    }
   }
-}
 
-export default defineEventHandler(async (event) => {
-  const startTime = Date.now()
+  // Format releases for LLM
+  const formattedReleases = recentReleases
+    .map(release => `${release.repo} ${release.tag}: ${release.body}`)
+    .join('\n\n')
 
-  try {
-    consola.info('Starting weekly summary generation...')
-
-    // Verify webhook authentication (basic security)
-    const { webhookSecret } = useRuntimeConfig()
-    if (webhookSecret) {
-      const authHeader = getHeader(event, 'authorization')
-      if (!authHeader || !authHeader.includes(webhookSecret)) {
-        consola.warn('Invalid or missing webhook authentication')
-        const error = createError({
-          statusCode: 401,
-          statusMessage: 'Unauthorized'
-        })
-        await sendWeeklySummaryFailureNotification(error, 'authentication')
-        throw error
-      }
-    }
-
-    // Fetch releases from the last 7 days
-    consola.info('Fetching releases from the last 7 days...')
-    const sevenDaysAgo = getDateSevenDaysAgo()
-    let recentReleases: Release[] = []
-
-    try {
-      const allReleases = await $fetch<Release[]>('/api/releases')
-
-      if (!Array.isArray(allReleases)) {
-        throw new Error('Invalid releases data format received')
-      }
-
-      // Filter releases from the last 7 days and exclude onmax repositories
-      recentReleases = allReleases.filter((release) => {
-        try {
-          const releaseDate = new Date(release.date)
-          const cutoffDate = new Date(sevenDaysAgo)
-          const isInTimeRange = releaseDate >= cutoffDate && !isNaN(releaseDate.getTime())
-          const isNotOnmaxRepo = !release.repo.includes('onmax/')
-          return isInTimeRange && isNotOnmaxRepo
-        } catch {
-          consola.warn(`Invalid date format for release: ${release.tag}`)
-          return false
-        }
-      })
-
-      consola.info(`Found ${recentReleases.length} releases from the last 7 days`)
-    } catch (fetchError) {
-      consola.error('Error fetching releases:', fetchError)
-      await sendWeeklySummaryFailureNotification(fetchError, 'fetching releases')
-      throw createError({
-        statusCode: 500,
-        statusMessage: 'Failed to fetch releases'
-      })
-    }
-
-    // Handle case with no releases
-    if (recentReleases.length === 0) {
-      const dateInfo = getCurrentDateInfo()
-      const message = `This is week number ${dateInfo.weekNumber}, and this has been the last week's news: Crickets. Not even the bugs bothered showing up. Everyone's apparently taking a well-deserved break from shipping. The calm before the storm, or just peak efficiency? You decide.`
-
-      try {
-        // Send directly to Slack without success notification
-        const { slackWebhookUrl } = useRuntimeConfig()
-        if (slackWebhookUrl) {
-          await $fetch(slackWebhookUrl, {
-            method: 'POST',
-            body: {
-              text: message,
-              username: 'Nimiq Weekly Recap',
-              icon_emoji: ':cricket:'
-            },
-            headers: {
-              'Content-Type': 'application/json'
-            }
-          })
-          consola.success('Empty week message sent to Slack')
-        }
-
-        return { success: true, releaseCount: 0, message, executionTime: Date.now() - startTime }
-      } catch (slackError) {
-        consola.error('Error sending empty week message to Slack:', slackError)
-        await sendWeeklySummaryFailureNotification(slackError, 'Slack notification')
-        throw createError({
-          statusCode: 500,
-          statusMessage: 'Failed to send Slack notification'
-        })
-      }
-    }
-
-    // Format releases for AI
-    const formattedReleases = recentReleases
-      .map(formatReleaseForAI)
-      .join('\n\n')
-
-    // Generate AI summary with retry logic
-    let summary: string
-    try {
-      consola.info('Generating AI summary...')
-      const dateInfo = getCurrentDateInfo()
-      const response = await generateText({
-        model: openai('gpt-4-turbo'),
-        system: SYSTEM_PROMPT,
-        messages: [
-          {
-            role: 'user',
-            content: `Current week: ${dateInfo.weekNumber} of ${dateInfo.year} (${dateInfo.date})\n\nHere are the releases from this week:\n\n${formattedReleases}`
-          }
-        ]
-      })
-
-      summary = response.text.trim()
-
-      if (!summary || summary.length < 20) {
-        throw new Error('AI generated summary is too short or empty')
-      }
-
-      consola.success('AI summary generated successfully')
-    } catch (aiError) {
-      consola.error('Error generating AI summary:', aiError)
-
-      // Fallback to simple summary
-      consola.info('Attempting fallback summary generation...')
-      const dateInfo = getCurrentDateInfo()
-      const repoNames = [...new Set(recentReleases.map(r => r.repo.split('/').pop()))]
-      summary = `This is week number ${dateInfo.weekNumber}, and this has been the last week's news: ${recentReleases.length} releases across ${repoNames.join(', ')}. The team's been busy shipping updates while I was having technical difficulties crafting witty commentary. Sometimes the robots need a coffee break too.`
-
-      await sendWeeklySummaryFailureNotification(aiError, 'AI generation (used fallback)')
-    }
-
-    // Send summary to Slack
-    try {
-      const { slackWebhookUrl } = useRuntimeConfig()
-      if (slackWebhookUrl) {
-        await $fetch(slackWebhookUrl, {
-          method: 'POST',
-          body: {
-            text: summary,
-            username: 'Nimiq Weekly Recap',
-            icon_emoji: ':rocket:'
-          },
-          headers: {
-            'Content-Type': 'application/json'
-          }
-        })
-        consola.success('Summary sent to Slack successfully')
-      } else {
-        consola.warn('Slack webhook URL not configured, summary not sent to main channel')
-      }
-
-      return {
-        success: true,
-        releaseCount: recentReleases.length,
-        message: summary,
-        executionTime: Date.now() - startTime
-      }
-    } catch (slackError) {
-      consola.error('Error sending summary to Slack:', slackError)
-      await sendWeeklySummaryFailureNotification(slackError, 'Slack delivery')
-      throw createError({
-        statusCode: 500,
-        statusMessage: 'Failed to send summary to Slack'
-      })
-    }
-  } catch (error) {
-    // Final catch-all error handler
-    const executionTime = Date.now() - startTime
-    consola.error('Unexpected error in weekly summary generation:', error)
-
-    // Only send failure notification if it hasn't been sent already
-    if (!(error as any)?.statusMessage?.includes('SLACK_NOTIFIED')) {
-      await sendWeeklySummaryFailureNotification(error, 'unexpected error')
-    }
-
-    throw createError({
-      statusCode: (error as any)?.statusCode || 500,
-      statusMessage: (error as any)?.statusMessage || 'Internal server error',
-      data: { executionTime }
-    })
+  // Build context with previous weeks
+  let context = `Current week: ${weekNumber} of ${now.getFullYear()}\n\nReleases:\n\n${formattedReleases}`
+  if (previousSummaries.length > 0) {
+    context += `\n\nPrevious weeks for context (use for running jokes and references):\n\n${previousSummaries.join('\n\n')}`
   }
+
+  // Generate summary with LLM
+  const { text: summary } = await generateText({
+    model: openai('gpt-5-nano'),
+    system: SYSTEM_PROMPT,
+    messages: [{ role: 'user', content: context }]
+  })
+
+  // Store this week's summary
+  const currentKey = `weekly-summary-${now.getFullYear()}-${weekNumber}`
+  await hubKV().set(currentKey, summary)
+
+  // Clean up summaries older than 4 weeks
+  for (let i = 5; i <= 8; i++) {
+    const oldWeek = weekNumber - i
+    const oldKey = `weekly-summary-${now.getFullYear()}-${oldWeek}`
+    await hubKV().del(oldKey)
+  }
+
+  // Send to Slack
+  await sendSlackNotification({ message: summary })
+
+  return { success: true, releaseCount: recentReleases.length, message: summary }
 })

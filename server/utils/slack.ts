@@ -23,15 +23,6 @@ interface SlackMessage {
 
 interface SlackNotificationOptions {
   message: string
-  title?: string
-  color?: 'good' | 'warning' | 'danger'
-  fields?: Array<{
-    title: string
-    value: string
-    short?: boolean
-  }>
-  tagMaxi?: boolean
-  context?: Record<string, any>
 }
 
 export async function sendSlackNotification(options: SlackNotificationOptions): Promise<void> {
@@ -48,46 +39,8 @@ export async function sendSlackNotification(options: SlackNotificationOptions): 
     return
   }
 
-  // Prepare the message
-  let messageText = options.message
-  if (options.tagMaxi && isProduction) {
-    messageText = `<@maxi> ${messageText}`
-  }
-
   const slackMessage: SlackMessage = {
-    text: messageText,
-    username: 'Nimiq Changelog Bot',
-    icon_emoji: ':rocket:',
-    attachments: [
-      {
-        color: options.color || 'good',
-        title: options.title,
-        fields: [
-          {
-            title: 'Environment',
-            value: isDevelopment ? 'Development' : 'Production',
-            short: true
-          },
-          {
-            title: 'Timestamp',
-            value: new Date().toISOString(),
-            short: true
-          },
-          ...(options.fields || [])
-        ],
-        footer: 'Nimiq Changelog',
-        ts: Math.floor(Date.now() / 1000)
-      }
-    ]
-  }
-
-  // Add context if provided
-  if (options.context && slackMessage.attachments?.[0]?.fields) {
-    slackMessage.attachments[0].fields.push({
-      title: 'Context',
-      value: `\`\`\`${JSON.stringify(options.context, null, 2)}\`\`\``,
-      short: false
-    })
+    text: options.message
   }
 
   try {
@@ -111,22 +64,7 @@ export async function sendWeeklySummarySuccessNotification(
   summaryPreview: string
 ): Promise<void> {
   await sendSlackNotification({
-    message: `📝 Weekly changelog summary generated successfully`,
-    title: `${releaseCount} releases summarized`,
-    color: 'good',
-    tagMaxi: false,
-    fields: [
-      {
-        title: 'Release Count',
-        value: releaseCount.toString(),
-        short: true
-      },
-      {
-        title: 'Preview',
-        value: summaryPreview.substring(0, 200) + (summaryPreview.length > 200 ? '...' : ''),
-        short: false
-      }
-    ]
+    message: `📝 Weekly changelog summary generated successfully with ${releaseCount} releases`
   })
 }
 
@@ -135,23 +73,6 @@ export async function sendWeeklySummaryFailureNotification(
   step?: string
 ): Promise<void> {
   await sendSlackNotification({
-    message: `🚨 Weekly changelog summary generation failed`,
-    title: `Summary generation error${step ? ` during ${step}` : ''}`,
-    color: 'danger',
-    tagMaxi: true,
-    fields: [
-      ...(step
-        ? [{
-            title: 'Failed Step',
-            value: step,
-            short: true
-          }]
-        : [])
-    ],
-    context: {
-      error: error?.message || error,
-      stack: error?.stack,
-      timestamp: new Date().toISOString()
-    }
+    message: `🚨 Weekly changelog summary generation failed${step ? ` during ${step}` : ''}: ${error?.message || error}`
   })
 }

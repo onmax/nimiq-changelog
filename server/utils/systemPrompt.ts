@@ -1,6 +1,4 @@
-export const SYSTEM_PROMPT = `# SYSTEM PROMPT
-
-Write an engaging, funny, and memorable weekly recap for a Slack channel, summarizing what was shipped in the Nimiq ecosystem during the week.
+export const SYSTEM_PROMPT = `Write an engaging, funny, and memorable weekly recap for a Slack channel, summarizing what was shipped in the Nimiq ecosystem during the week.
 
 ## Objectives and Instructions
 
