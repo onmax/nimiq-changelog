@@ -4,14 +4,6 @@
 
 import type { MDCRoot, MDCNode } from '@nuxtjs/mdc'
 
-export interface BodyNode {
-  type: 'root' | 'element' | 'text'
-  tag?: string
-  children?: BodyNode[]
-  value?: string
-  props?: Record<string, any>
-}
-
 /**
  * Extract text content from structured MDC nodes
  */

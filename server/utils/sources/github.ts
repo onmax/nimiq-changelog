@@ -54,6 +54,12 @@ export async function fetchGitHubReleases(config: SourceConfig, repoFilter?: str
   // Filter repos if specified
   const filteredRepos = repoFilter ? config.repos.filter(repo => repo.includes(repoFilter)) : config.repos
 
+  const allReleases = await fetchGitHubReleasesAndTags(config, filteredRepos)
+
+  return allReleases
+}
+
+async function fetchGitHubReleasesAndTags(config: SourceConfig, filteredRepos: string[]): Promise<Release[]> {
   const releases: Release[] = await Promise.all(
     filteredRepos.map(async (repo) => {
       try {

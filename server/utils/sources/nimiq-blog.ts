@@ -43,7 +43,7 @@ function extractBlogContent(html: string): { title?: string, content?: string, p
   return { title, content, publishDate }
 }
 
-export async function fetchNimiqBlogReleases(config: SourceConfig, repoFilter?: string): Promise<Release[]> {
+export async function fetchNimiqBlogReleases(config: SourceConfig, _repoFilter?: string): Promise<Release[]> {
   if (!config.enabled) {
     return []
   }
@@ -71,12 +71,12 @@ export async function fetchNimiqBlogReleases(config: SourceConfig, repoFilter?: 
       if (count >= 8) break
 
       const urlMatch = match.match(/href="([^"]*)"/i)
-      if (!urlMatch) continue
+      if (!urlMatch || !urlMatch[1]) continue
 
       let url = urlMatch[1]
 
       // Skip if it's just the blog root or already processed
-      if (url === '/blog' || url === '/blog/' || uniqueUrls.has(url)) continue
+      if (!url || url === '/blog' || url === '/blog/' || uniqueUrls.has(url)) continue
 
       // Convert relative URLs to absolute
       if (url.startsWith('/')) url = `https://www.nimiq.com${url}`
@@ -88,8 +88,7 @@ export async function fetchNimiqBlogReleases(config: SourceConfig, repoFilter?: 
 
     // Process posts and extract their actual publish dates from HTML
 
-    for (const { url, order } of blogPostsWithOrder) {
-
+    for (const { url } of blogPostsWithOrder) {
       try {
         // Fetch individual blog post to extract content
         const postHtml = await fetchHtml(url, {
@@ -106,7 +105,7 @@ export async function fetchNimiqBlogReleases(config: SourceConfig, repoFilter?: 
         const finalTitle = title || urlTitle
 
         // Parse the content as markdown to create the MDCRoot structure
-        const body = content ? (await parseMarkdown(content)).body : undefined
+        const body = content ? (await parseMarkdown(content)).body : { type: 'root' as const, children: [] }
 
         // Use extracted publish date or fallback to default date
         let postDate: Date
@@ -117,16 +116,16 @@ export async function fetchNimiqBlogReleases(config: SourceConfig, repoFilter?: 
 
           // Map month abbreviations to numbers
           const monthMap: Record<string, number> = {
-            'Jan': 0, 'Feb': 1, 'Mar': 2, 'Apr': 3, 'May': 4, 'Jun': 5,
-            'Jul': 6, 'Aug': 7, 'Sep': 8, 'Oct': 9, 'Nov': 10, 'Dec': 11
+            Jan: 0, Feb: 1, Mar: 2, Apr: 3, May: 4, Jun: 5,
+            Jul: 6, Aug: 7, Sep: 8, Oct: 9, Nov: 10, Dec: 11
           }
 
           // Try to parse "Month Day" or "Month Day, Year" format (e.g., "Aug 28", "Aug 28, 2024")
           const monthDayMatch = dateStr.match(/^(\w{3})\s+(\d{1,2})(?:,\s*(\d{4}))?$/)
           if (monthDayMatch) {
             const [, monthStr, dayStr, yearStr] = monthDayMatch
-            const month = monthMap[monthStr]
-            const day = parseInt(dayStr, 10)
+            const month = monthStr ? monthMap[monthStr] : undefined
+            const day = dayStr ? parseInt(dayStr, 10) : NaN
             const year = yearStr ? parseInt(yearStr, 10) : 2025 // Default to current year 2025
 
             if (month !== undefined && day >= 1 && day <= 31) {
@@ -160,7 +159,6 @@ export async function fetchNimiqBlogReleases(config: SourceConfig, repoFilter?: 
           date,
           body
         })
-
       } catch (postError) {
         console.warn(`Failed to fetch blog post ${url}:`, postError)
         continue

@@ -1,38 +1,38 @@
 import type { Release } from '../../shared/types/releases'
-import { sources } from './sourceRegistry'
+import type { SourcesConfig } from './sources/types'
+import { sources, flattenSourceGroups, getEnabledSourceGroupsForReleases, getEnabledSourceGroupsForSummary } from './sourceRegistry'
 
-export interface AllSourcesConfig {
-  github: { enabled: boolean, repos?: string[] }
-  gitlab: { enabled: boolean, projects?: string, baseUrl?: string, token?: string }
-  npm: { enabled: boolean, packages?: string[] }
-  nimiqFrontend: { enabled: boolean }
-}
+type FetchContext = 'releases' | 'slack'
 
-export async function fetchAllReleases(
-  configs: AllSourcesConfig,
-  repoFilter?: string
+/**
+ * New function to fetch releases from grouped sources configuration
+ */
+export async function fetchReleasesFromGroups(
+  sourcesConfig: SourcesConfig,
+  repoFilter?: string,
+  context: FetchContext = 'releases'
 ): Promise<Release[]> {
   const allReleases: Release[] = []
 
-  // Map camelCase config keys to kebab-case source keys
-  const sourceKeyMap = {
-    'github': 'github',
-    'gitlab': 'gitlab',
-    'npm': 'npm',
-    'nimiq-frontend': 'nimiqFrontend'
-  } as const
+  // Get the appropriate source groups based on context
+  const enabledGroups = context === 'releases'
+    ? getEnabledSourceGroupsForReleases(sourcesConfig)
+    : getEnabledSourceGroupsForSummary(sourcesConfig)
 
-  // Fetch from all enabled sources in parallel
-  const sourcePromises = Object.entries(sources).map(async ([sourceKey, sourceMeta]) => {
-    const configKey = Object.entries(sourceKeyMap).find(([k, _v]) => k === sourceKey)?.[1]
-    const config = configKey ? configs[configKey as keyof AllSourcesConfig] : undefined
+  // Flatten all sources from enabled groups
+  const flattenedSources = flattenSourceGroups(enabledGroups)
 
-    if (config?.enabled) {
+  // Fetch from all sources in parallel
+  const sourcePromises = flattenedSources.map(async ({ kind, config, groupLabel }) => {
+    const sourceMeta = sources[kind]
+
+    if (sourceMeta && config.enabled) {
       try {
         const releases = await sourceMeta.fetcher(config, repoFilter)
-        return releases
+        // Add group label to releases for potential UI grouping
+        return releases.map(release => ({ ...release, groupLabel }))
       } catch (error) {
-        console.warn(`Failed to fetch releases from ${sourceMeta.name}:`, error)
+        console.warn(`Failed to fetch releases from ${sourceMeta.name} (${groupLabel}):`, error)
         return []
       }
     }
@@ -42,10 +42,34 @@ export async function fetchAllReleases(
   const results = await Promise.all(sourcePromises)
   allReleases.push(...results.flat())
 
+  // Apply context-specific filtering (keep existing logic for compatibility)
+  let filteredReleases = allReleases
+
+  if (context === 'slack') {
+    // Filter out @onmax repos for slack summary
+    filteredReleases = allReleases.filter(release => !release.repo.includes('onmax/'))
+  } else if (context === 'releases') {
+    // Filter out nimiq/bug-bounty-dashboard for releases endpoint (only in production)
+    if (process.env.NODE_ENV === 'production') {
+      filteredReleases = allReleases.filter(release => release.repo !== 'nimiq/bug-bounty-dashboard')
+    }
+  }
+
   // Apply repo filter to final results if specified
   const finalResults = repoFilter
-    ? allReleases.filter(release => release.repo.includes(repoFilter))
-    : allReleases
+    ? filteredReleases.filter((release) => {
+        // Support filtering by repo name
+        if (release.repo.includes(repoFilter)) return true
+
+        // Support filtering by source type + repo (e.g., "gh_pr:nimiq/bug-bounty-dashboard")
+        if (repoFilter.includes(':')) {
+          const [_sourceType, repoName] = repoFilter.split(':', 2)
+          return repoName ? release.repo.includes(repoName) : false
+        }
+
+        return false
+      })
+    : filteredReleases
 
   // Sort by date (most recent first) and limit results
   return finalResults
