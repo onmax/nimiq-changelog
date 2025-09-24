@@ -1,5 +1,4 @@
 import { parseMarkdown } from '@nuxtjs/mdc/runtime'
-import { JSDOM } from 'jsdom'
 import type { Release } from '../../../shared/types/releases'
 import type { SourceConfig } from './types'
 
@@ -13,16 +12,13 @@ async function fetchHtml(url: string, options?: any): Promise<string> {
 }
 
 function extractBlogContent(html: string): { title?: string, content?: string, publishDate?: string } {
-  const dom = new JSDOM(html)
-  const document = dom.window.document
+  // Extract title from h1 element using regex
+  const h1Match = html.match(/<h1[^>]*>(.*?)<\/h1>/is)
+  const title = h1Match?.[1]?.replace(/<[^>]*>/g, '').trim() || undefined
 
-  // Extract title from h1 element
-  const h1Element = document.querySelector('h1')
-  const title = h1Element?.textContent?.trim()
-
-  // Extract publication date from <time> element
-  const timeElement = document.querySelector('time')
-  const publishDate = timeElement?.getAttribute('datetime') || timeElement?.textContent?.trim()
+  // Extract publication date from <time> element using regex
+  const timeMatch = html.match(/<time[^>]*(?:datetime=["']([^"']*)["'])?[^>]*>(.*?)<\/time>/is)
+  const publishDate = timeMatch ? (timeMatch[1] || timeMatch[2]?.replace(/<[^>]*>/g, '').trim()) : undefined
 
   // Extract content: h1 text + first paragraph of article
   const contentParts: string[] = []
@@ -32,10 +28,13 @@ function extractBlogContent(html: string): { title?: string, content?: string, p
     contentParts.push(title)
   }
 
-  // Get first paragraph from article
-  const articleFirstP = document.querySelector('article p:first-child')
-  if (articleFirstP?.textContent?.trim()) {
-    contentParts.push(articleFirstP.textContent.trim())
+  // Get first paragraph from article using regex
+  const articlePMatch = html.match(/<article[^>]*>[\s\S]*?<p[^>]*>(.*?)<\/p>/is)
+  if (articlePMatch?.[1]) {
+    const paragraphText = articlePMatch[1].replace(/<[^>]*>/g, '').trim()
+    if (paragraphText) {
+      contentParts.push(paragraphText)
+    }
   }
 
   const content = contentParts.join(' ')

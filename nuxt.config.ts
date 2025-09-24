@@ -71,6 +71,13 @@ export default defineNuxtConfig({
     ai: false
   },
 
+  nitro: {
+    experimental: {
+      wasm: true
+    },
+    preset: 'cloudflare-module'
+  },
+
   eslint: {
     config: {
       stylistic: {
