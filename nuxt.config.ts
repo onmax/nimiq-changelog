@@ -65,17 +65,17 @@ export default defineNuxtConfig({
   },
 
   compatibilityDate: '2025-06-01',
-  hub: {
-    cache: true,
-    kv: true,
-    ai: false
-  },
 
   nitro: {
     experimental: {
       wasm: true
     },
     preset: 'cloudflare-module'
+  },
+  hub: {
+    cache: true,
+    kv: true,
+    ai: false
   },
 
   eslint: {
