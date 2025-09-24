@@ -21,7 +21,7 @@ describe('Nimiq Blog Source - Real Data', () => {
       expect(release).toHaveProperty('date')
       expect(release).toHaveProperty('body')
 
-      expect(release.repo).toBe('nimiq/blog')
+      expect(release.repo).toBe('Nimiq Blog')
       expect(release.url).toMatch(/https?:\/\//)
       expect(release.tag).toMatch(/^blog-\d{4}-\d{2}-\d{2}$/)
       expect(new Date(release.date)).toBeInstanceOf(Date)
