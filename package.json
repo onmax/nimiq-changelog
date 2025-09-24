@@ -24,6 +24,7 @@
     "@nuxtjs/mdc": "0.17.4",
     "@vueuse/nuxt": "13.9.0",
     "ai": "^5.0.41",
+    "jsdom": "^27.0.0",
     "nimiq-css": "^1.0.0-beta.76",
     "nimiq-icons": "1.0.0-beta.76",
     "nuxt": "4.1.0",
@@ -33,6 +34,7 @@
   },
   "devDependencies": {
     "@nuxt/eslint": "^1.9.0",
+    "@types/jsdom": "^21.1.7",
     "@types/node": "^22.0.0",
     "eslint": "^9.35.0",
     "typescript": "^5.9.2",

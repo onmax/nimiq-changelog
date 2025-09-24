@@ -6,7 +6,7 @@ import { groupCommits, groupedCommitsToMarkdown } from '../groupCommits'
 import { extractCommitMessages } from '../extractCommitMessages'
 import { universalFetch } from '../fetch'
 
-interface NimiqFrontendRelease {
+interface nimiqWalletRelease {
   version: string
   date: string
   message: string
@@ -35,7 +35,7 @@ async function processReleaseBody(bodyContent: string, repo: string) {
   return body
 }
 
-export async function fetchNimiqFrontendReleases(config: SourceConfig, repoFilter?: string): Promise<Release[]> {
+export async function fetchNimiqWalletReleases(config: SourceConfig, repoFilter?: string): Promise<Release[]> {
   if (!config.enabled) {
     return []
   }
@@ -44,7 +44,7 @@ export async function fetchNimiqFrontendReleases(config: SourceConfig, repoFilte
 
   try {
     // Fetch Nimiq frontend releases
-    const nimiqReleases: NimiqFrontendRelease[] = await universalFetch<NimiqFrontendRelease[]>(NIMIQ_FRONTEND_URL)
+    const nimiqReleases: nimiqWalletRelease[] = await universalFetch<nimiqWalletRelease[]>(NIMIQ_FRONTEND_URL)
 
     const formattedNimiqReleases: Release[] = []
 

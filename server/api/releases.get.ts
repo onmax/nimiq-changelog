@@ -1,19 +1,20 @@
 import { getQuery } from 'h3'
-import { fetchAllReleases, type AllSourcesConfig } from '../utils/sources'
+import { fetchReleasesFromGroups } from '../utils/sources'
+import type { SourcesConfig } from '../utils/sources/types'
 
 export default defineCachedEventHandler(async (event) => {
   console.log('fetching releases')
 
   const query = getQuery(event)
-  const repoFilter = typeof query.repo === 'string' ? query.repo : ''
+  const repoFilter = typeof query.repo === 'string' ? query.repo : (typeof query.query === 'string' ? query.query : '')
 
   const runtimeConfig = useRuntimeConfig()
 
   // Get sources configuration from runtime config
-  const sourcesConfig: AllSourcesConfig = runtimeConfig.sources as AllSourcesConfig
+  const sourcesConfig = runtimeConfig.sources as SourcesConfig
 
-  // Fetch all releases using the new modular sources system
-  const allReleases = await fetchAllReleases(sourcesConfig, repoFilter)
+  // Fetch releases using context-aware filtering for releases endpoint
+  const allReleases = await fetchReleasesFromGroups(sourcesConfig, repoFilter, 'releases')
 
   return allReleases
 }, {

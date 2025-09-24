@@ -2,6 +2,7 @@
 import process from 'node:process'
 import { icons as nimiqIcons } from 'nimiq-icons'
 import * as v from 'valibot'
+import { sourcesConfig } from './sources.config'
 
 export default defineNuxtConfig({
 
@@ -52,38 +53,9 @@ export default defineNuxtConfig({
   },
 
   runtimeConfig: {
-    gitlab: {
-      token: process.env.NUXT_GITLAB_TOKEN || '',
-      projects: process.env.NUXT_GITLAB_PROJECTS || '',
-      baseUrl: process.env.NUXT_GITLAB_BASE_URL || 'https://scm.nim.team'
-    },
     webhookSecret: process.env.NUXT_WEBHOOK_SECRET || '',
     slackWebhookUrl: process.env.NUXT_SLACK_WEBHOOK_URL,
-    sources: {
-      github: {
-        enabled: true,
-        repos: [
-          'nimiq/core-rs-albatross',
-          'onmax/nimiq-mcp',
-          'onmax/albatross-rpc-client-ts'
-        ]
-      },
-      gitlab: {
-        enabled: !!(process.env.NUXT_GITLAB_TOKEN && process.env.NUXT_GITLAB_PROJECTS),
-        projects: process.env.NUXT_GITLAB_PROJECTS || '',
-        baseUrl: process.env.NUXT_GITLAB_BASE_URL || 'https://scm.nim.team',
-        token: process.env.NUXT_GITLAB_TOKEN || ''
-      },
-      npm: {
-        enabled: true,
-        packages: [
-          '@nimiq/utils'
-        ]
-      },
-      nimiqFrontend: {
-        enabled: true
-      }
-    }
+    sources: sourcesConfig
   },
 
   routeRules: {
@@ -95,7 +67,8 @@ export default defineNuxtConfig({
   compatibilityDate: '2025-06-01',
   hub: {
     cache: true,
-    kv: true
+    kv: true,
+    ai: false
   },
 
   eslint: {
@@ -131,32 +104,23 @@ export default defineNuxtConfig({
   },
   safeRuntimeConfig: {
     $schema: v.object({
-      gitlab: v.object({
-        token: v.string(),
-        projects: v.string(),
-        baseUrl: v.pipe(v.string(), v.url())
-      }),
       webhookSecret: v.string(),
       slackWebhookUrl: v.pipe(v.string(), v.minLength(1, 'NUXT_SLACK_WEBHOOK_URL is required'), v.url()),
-      sources: v.object({
-        github: v.object({
-          enabled: v.boolean(),
-          repos: v.array(v.string())
-        }),
-        gitlab: v.object({
-          enabled: v.boolean(),
-          projects: v.string(),
-          baseUrl: v.pipe(v.string(), v.url()),
-          token: v.string()
-        }),
-        npm: v.object({
-          enabled: v.boolean(),
-          packages: v.array(v.string())
-        }),
-        nimiqFrontend: v.object({
-          enabled: v.boolean()
+      sources: v.array(
+        v.object({
+          label: v.string(),
+          source: v.union([
+            v.string(),
+            v.object({
+              kind: v.string(),
+              config: v.optional(v.record(v.string(), v.any()))
+            })
+          ]),
+          token: v.optional(v.string()),
+          showInReleases: v.optional(v.boolean()),
+          showInSummary: v.optional(v.boolean())
         })
-      })
+      )
     })
   }
 })

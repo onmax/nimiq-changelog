@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { fetchNimiqFrontendReleases } from './nimiq-frontend'
+import { fetchNimiqWalletReleases } from './nimiq-wallet'
 
 describe('Nimiq Frontend Source - Real Data', () => {
   it('should fetch real Nimiq frontend releases', async () => {
@@ -7,7 +7,7 @@ describe('Nimiq Frontend Source - Real Data', () => {
       enabled: true
     }
 
-    const releases = await fetchNimiqFrontendReleases(config)
+    const releases = await fetchNimiqWalletReleases(config)
 
     expect(releases).toBeDefined()
     expect(Array.isArray(releases)).toBe(true)
@@ -32,7 +32,7 @@ describe('Nimiq Frontend Source - Real Data', () => {
       enabled: false
     }
 
-    const releases = await fetchNimiqFrontendReleases(config)
+    const releases = await fetchNimiqWalletReleases(config)
     expect(releases).toEqual([])
   })
 
@@ -41,7 +41,7 @@ describe('Nimiq Frontend Source - Real Data', () => {
       enabled: true
     }
 
-    const releases = await fetchNimiqFrontendReleases(config, 'wallet')
+    const releases = await fetchNimiqWalletReleases(config, 'wallet')
 
     expect(releases).toBeDefined()
     expect(Array.isArray(releases)).toBe(true)

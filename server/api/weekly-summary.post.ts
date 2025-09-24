@@ -2,6 +2,8 @@ import { generateText } from 'ai'
 import { openai } from '@ai-sdk/openai'
 import { sendSlackNotification } from '../utils/slack'
 import { SYSTEM_PROMPT } from '../utils/systemPrompt'
+import { fetchReleasesFromGroups } from '../utils/sources'
+import type { SourcesConfig } from '../utils/sources/types'
 import type { MDCRoot, MDCNode } from '@nuxtjs/mdc'
 
 /**
@@ -32,9 +34,13 @@ export default defineEventHandler(async () => {
   const sevenDaysAgo = new Date()
   sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7)
 
-  const allReleases = await $fetch('/api/releases')
+  const runtimeConfig = useRuntimeConfig()
+  const sourcesConfig = runtimeConfig.sources as SourcesConfig
+
+  // Fetch releases using slack-specific filtering (excludes @onmax repos)
+  const allReleases = await fetchReleasesFromGroups(sourcesConfig, undefined, 'slack')
   const recentReleases = allReleases.filter(release =>
-    new Date(release.date) >= sevenDaysAgo && !release.repo.includes('onmax/')
+    new Date(release.date) >= sevenDaysAgo
   )
 
   // Get current week number
