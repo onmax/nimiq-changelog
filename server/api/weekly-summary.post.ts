@@ -29,6 +29,67 @@ function mdcToText(mdc: MDCRoot): string {
   return extractText(mdc.children).join(' ').trim()
 }
 
+/**
+ * Convert releases to formatted markdown text for Slack attachment
+ */
+function formatReleasesForSlack(releases: any[]): string {
+  if (releases.length === 0) {
+    return 'No releases found for this week.'
+  }
+
+  let markdown = `# Weekly Changelog\n\n`
+  markdown += `*Generated on ${new Date().toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  })}*\n\n`
+
+  // Group releases by repository
+  const releasesByRepo: Record<string, any[]> = {}
+  releases.forEach(release => {
+    if (!releasesByRepo[release.repo]) {
+      releasesByRepo[release.repo] = []
+    }
+    releasesByRepo[release.repo].push(release)
+  })
+
+  // Generate content for each repository
+  Object.keys(releasesByRepo).sort().forEach(repo => {
+    const repoReleases = releasesByRepo[repo]
+    markdown += `## ${repo}\n\n`
+
+    // Sort releases by date (newest first)
+    repoReleases.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+
+    repoReleases.forEach(release => {
+      const date = new Date(release.date).toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric'
+      })
+
+      markdown += `### ${release.tag} (${date})\n\n`
+
+      if (release.url && release.url !== '#') {
+        markdown += `[View Release](${release.url})\n\n`
+      }
+
+      // Add release body content
+      const bodyText = mdcToText(release.body)
+      if (bodyText && bodyText.length > 0) {
+        // Truncate if too long (Slack has limits)
+        const truncatedText = bodyText.length > 500
+          ? bodyText.substring(0, 500) + '...'
+          : bodyText
+        markdown += `${truncatedText}\n\n`
+      }
+
+      markdown += `---\n\n`
+    })
+  })
+
+  return markdown
+}
+
 export default defineEventHandler(async () => {
   // Get releases from last 7 days
   const sevenDaysAgo = new Date()
@@ -89,8 +150,24 @@ export default defineEventHandler(async () => {
     await hubKV().del(oldKey)
   }
 
-  // Send to Slack
-  await sendSlackNotification({ message: summary })
+  // Format the releases for the file attachment
+  const changelogText = formatReleasesForSlack(recentReleases)
+
+  // Generate filename with week info
+  const currentDate = new Date()
+  const weekNumber = Math.ceil((currentDate.getTime() - new Date(currentDate.getFullYear(), 0, 1).getTime()) / (7 * 24 * 60 * 60 * 1000))
+  const filename = `nimiq-changelog-week-${weekNumber}-${currentDate.getFullYear()}.md`
+
+  // Send to Slack with changelog as file attachment
+  await sendSlackNotification({
+    message: summary,
+    fileAttachment: {
+      content: changelogText,
+      filename: filename,
+      filetype: 'markdown',
+      title: `📄 Weekly Changelog (${recentReleases.length} release${recentReleases.length !== 1 ? 's' : ''})`
+    }
+  })
 
   return { success: true, releaseCount: recentReleases.length, message: summary }
 })
