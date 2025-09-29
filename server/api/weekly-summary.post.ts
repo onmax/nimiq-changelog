@@ -135,7 +135,7 @@ export default defineEventHandler(async () => {
   // Generate summaries with multiple LLMs in parallel
   const models = [
     { name: 'GPT-5 Nano', model: openai('gpt-5-nano') },
-    { name: 'GPT-4o', model: openai('gpt-4o') }
+    { name: 'GPT-4.1', model: openai('gpt-4.1') }
   ]
 
   const summaryPromises = models.map(async ({ name, model }) => {
