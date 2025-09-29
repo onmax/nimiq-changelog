@@ -54,7 +54,8 @@ export default defineNuxtConfig({
 
   runtimeConfig: {
     webhookSecret: process.env.NUXT_WEBHOOK_SECRET || '',
-    slackWebhookUrl: process.env.NUXT_SLACK_WEBHOOK_URL,
+    slackBotToken: process.env.NUXT_SLACK_BOT_TOKEN,
+    slackChannelId: process.env.NUXT_SLACK_CHANNEL_ID,
     sources: sourcesConfig
   },
 
@@ -112,7 +113,8 @@ export default defineNuxtConfig({
   safeRuntimeConfig: {
     $schema: v.object({
       webhookSecret: v.string(),
-      slackWebhookUrl: v.pipe(v.string(), v.minLength(1, 'NUXT_SLACK_WEBHOOK_URL is required'), v.url()),
+      slackBotToken: v.pipe(v.string(), v.minLength(1, 'NUXT_SLACK_BOT_TOKEN is required')),
+      slackChannelId: v.pipe(v.string(), v.minLength(1, 'NUXT_SLACK_CHANNEL_ID is required')),
       sources: v.array(
         v.object({
           label: v.string(),
