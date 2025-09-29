@@ -46,22 +46,22 @@ function formatReleasesForSlack(releases: any[]): string {
 
   // Group releases by repository
   const releasesByRepo: Record<string, any[]> = {}
-  releases.forEach(release => {
+  releases.forEach((release) => {
     if (!releasesByRepo[release.repo]) {
       releasesByRepo[release.repo] = []
     }
-    releasesByRepo[release.repo].push(release)
+    releasesByRepo[release.repo]!.push(release)
   })
 
   // Generate content for each repository
-  Object.keys(releasesByRepo).sort().forEach(repo => {
-    const repoReleases = releasesByRepo[repo]
+  Object.keys(releasesByRepo).sort().forEach((repo) => {
+    const repoReleases = releasesByRepo[repo]!
     markdown += `## ${repo}\n\n`
 
     // Sort releases by date (newest first)
     repoReleases.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
 
-    repoReleases.forEach(release => {
+    repoReleases.forEach((release) => {
       const date = new Date(release.date).toLocaleDateString('en-US', {
         month: 'short',
         day: 'numeric'
@@ -132,16 +132,26 @@ export default defineEventHandler(async () => {
     context += `\n\nPrevious weeks for context (use for running jokes and references):\n\n${previousSummaries.join('\n\n')}`
   }
 
-  // Generate summary with LLM
-  const { text: summary } = await generateText({
-    model: openai('gpt-5-nano'),
-    system: SYSTEM_PROMPT,
-    messages: [{ role: 'user', content: context }]
+  // Generate summaries with multiple LLMs in parallel
+  const models = [
+    { name: 'GPT-5 Nano', model: openai('gpt-5-nano') },
+    { name: 'GPT-4.1', model: openai('gpt-4.1') }
+  ]
+
+  const summaryPromises = models.map(async ({ name, model }) => {
+    const { text } = await generateText({
+      model,
+      system: SYSTEM_PROMPT,
+      messages: [{ role: 'user', content: context }]
+    })
+    return { name, text }
   })
 
-  // Store this week's summary
+  const summaries = await Promise.all(summaryPromises)
+
+  // Store this week's summary (use the first model's summary for storage/backwards compatibility)
   const currentKey = `weekly-summary-${now.getFullYear()}-${weekNumber}`
-  await hubKV().set(currentKey, summary)
+  await hubKV().set(currentKey, summaries[0]?.text || '')
 
   // Clean up summaries older than 4 weeks
   for (let i = 5; i <= 8; i++) {
@@ -155,12 +165,17 @@ export default defineEventHandler(async () => {
 
   // Generate filename with week info
   const currentDate = new Date()
-  const weekNumber = Math.ceil((currentDate.getTime() - new Date(currentDate.getFullYear(), 0, 1).getTime()) / (7 * 24 * 60 * 60 * 1000))
   const filename = `nimiq-changelog-week-${weekNumber}-${currentDate.getFullYear()}.md`
 
-  // Send to Slack with changelog as file attachment
-  await sendSlackNotification({
-    message: summary,
+  // Send first model response with changelog attachment
+  const firstSummary = summaries[0]
+  if (!firstSummary) {
+    throw new Error('No summaries generated')
+  }
+  const initialMessage = `🤖 **${firstSummary.name}**\n\n${firstSummary.text}`
+
+  const messageTs = await sendSlackNotification({
+    message: initialMessage,
     fileAttachment: {
       content: changelogText,
       filename: filename,
@@ -169,5 +184,22 @@ export default defineEventHandler(async () => {
     }
   })
 
-  return { success: true, releaseCount: recentReleases.length, message: summary }
+  // Send remaining model responses as threaded replies
+  for (let i = 1; i < summaries.length; i++) {
+    const summary = summaries[i]
+    if (summary) {
+      const threadMessage = `🤖 **${summary.name}**\n\n${summary.text}`
+
+      await sendSlackNotification({
+        message: threadMessage,
+        threadTs: messageTs
+      })
+    }
+  }
+
+  return {
+    success: true,
+    releaseCount: recentReleases.length,
+    summaries: summaries.map(s => ({ model: s.name, message: s.text }))
+  }
 })

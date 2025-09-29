@@ -2,27 +2,9 @@ import process from 'node:process'
 import { consola } from 'consola'
 import { isProduction } from 'std-env'
 
-interface SlackMessage {
-  text: string
-  username?: string
-  icon_emoji?: string
-  attachments?: Array<{
-    color?: string
-    fields?: Array<{
-      title: string
-      value: string
-      short?: boolean
-    }>
-    text?: string
-    title?: string
-    title_link?: string
-    footer?: string
-    ts?: number
-  }>
-}
-
 interface SlackNotificationOptions {
   message: string
+  threadTs?: string
   attachments?: Array<{
     color?: string
     fields?: Array<{
@@ -44,58 +26,61 @@ interface SlackNotificationOptions {
   }
 }
 
-export async function sendSlackNotification(options: SlackNotificationOptions): Promise<void> {
+export async function sendSlackNotification(options: SlackNotificationOptions): Promise<string | undefined> {
   // Only send notifications in production unless explicitly testing
   if (!isProduction && !process.env.NUXT_SLACK_WEBHOOK_URL_FORCE_DEV) {
     consola.info('Skipping Slack notification in development:', options.message)
     return
   }
 
-  const runtimeConfig = useRuntimeConfig()
-  const { slackWebhookUrl } = runtimeConfig
   const slackBotToken = process.env.NUXT_SLACK_BOT_TOKEN
+  const channelId = process.env.NUXT_SLACK_CHANNEL_ID
 
-  if (!slackWebhookUrl) {
-    consola.warn('NUXT_SLACK_WEBHOOK_URL not configured, skipping Slack notification')
+  if (!slackBotToken || !channelId) {
+    consola.error('NUXT_SLACK_BOT_TOKEN and NUXT_SLACK_CHANNEL_ID are required')
     return
   }
 
-  // Send the main message via webhook
-  const slackMessage: SlackMessage = {
-    text: options.message,
-    ...(options.attachments && { attachments: options.attachments })
-  }
-
   try {
-    await $fetch(slackWebhookUrl, {
+    const response = await $fetch<{ ok: boolean, ts: string, error?: string }>('https://slack.com/api/chat.postMessage', {
       method: 'POST',
-      body: slackMessage,
       headers: {
+        'Authorization': `Bearer ${slackBotToken}`,
         'Content-Type': 'application/json'
+      },
+      body: {
+        channel: channelId,
+        text: options.message,
+        ...(options.threadTs && { thread_ts: options.threadTs }),
+        ...(options.attachments && { attachments: options.attachments })
       }
     })
 
-    consola.success('Slack notification sent successfully')
-
-    // If there's a file attachment and we have a bot token, upload the file
-    if (options.fileAttachment && slackBotToken) {
-      await uploadFileToSlack(options.fileAttachment, slackBotToken)
-    } else if (options.fileAttachment && !slackBotToken) {
-      consola.warn('File attachment requested but NUXT_SLACK_BOT_TOKEN not configured')
+    if (!response.ok) {
+      consola.error('Failed to send Slack notification:', response.error)
+      return
     }
 
+    consola.success('Slack notification sent successfully')
+
+    // Upload file attachment if provided
+    if (options.fileAttachment) {
+      await uploadFileToSlack(options.fileAttachment, slackBotToken)
+    }
+
+    return response.ts
   } catch (error) {
     consola.error('Failed to send Slack notification:', error)
+    return undefined
   }
 }
 
 async function uploadFileToSlack(fileAttachment: NonNullable<SlackNotificationOptions['fileAttachment']>, botToken: string): Promise<void> {
   try {
-    // Get the channel ID from the webhook URL (extract from URL pattern)
     const channelId = process.env.NUXT_SLACK_CHANNEL_ID
 
     if (!channelId) {
-      consola.warn('NUXT_SLACK_CHANNEL_ID not configured, cannot upload file')
+      consola.error('NUXT_SLACK_CHANNEL_ID not configured, cannot upload file')
       return
     }
 
@@ -111,10 +96,10 @@ async function uploadFileToSlack(fileAttachment: NonNullable<SlackNotificationOp
       formData.append('title', fileAttachment.title)
     }
 
-    const response = await $fetch('https://slack.com/api/files.upload', {
+    const response = await $fetch<{ ok: boolean, error?: string }>('https://slack.com/api/files.upload', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${botToken}`
+        Authorization: `Bearer ${botToken}`
       },
       body: formData
     })
@@ -124,7 +109,6 @@ async function uploadFileToSlack(fileAttachment: NonNullable<SlackNotificationOp
     } else {
       consola.error('Failed to upload file to Slack:', response.error)
     }
-
   } catch (error) {
     consola.error('Failed to upload file to Slack:', error)
   }
