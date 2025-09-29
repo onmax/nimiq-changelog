@@ -2,26 +2,6 @@ import process from 'node:process'
 import { consola } from 'consola'
 import { isProduction } from 'std-env'
 
-interface SlackMessage {
-  text: string
-  username?: string
-  icon_emoji?: string
-  thread_ts?: string
-  attachments?: Array<{
-    color?: string
-    fields?: Array<{
-      title: string
-      value: string
-      short?: boolean
-    }>
-    text?: string
-    title?: string
-    title_link?: string
-    footer?: string
-    ts?: number
-  }>
-}
-
 interface SlackNotificationOptions {
   message: string
   threadTs?: string
@@ -53,75 +33,42 @@ export async function sendSlackNotification(options: SlackNotificationOptions): 
     return
   }
 
-  const runtimeConfig = useRuntimeConfig()
-  const { slackWebhookUrl } = runtimeConfig
   const slackBotToken = process.env.NUXT_SLACK_BOT_TOKEN
+  const channelId = process.env.NUXT_SLACK_CHANNEL_ID
 
-  if (!slackWebhookUrl) {
-    consola.warn('NUXT_SLACK_WEBHOOK_URL not configured, skipping Slack notification')
+  if (!slackBotToken || !channelId) {
+    consola.error('NUXT_SLACK_BOT_TOKEN and NUXT_SLACK_CHANNEL_ID are required')
     return
   }
 
-  // Send the main message via webhook
-  const slackMessage: SlackMessage = {
-    text: options.message,
-    ...(options.threadTs && { thread_ts: options.threadTs }),
-    ...(options.attachments && { attachments: options.attachments })
-  }
-
   try {
-    let messageTs: string | undefined
-
-    // If we have a bot token, use the API for better functionality (including getting ts)
-    if (slackBotToken) {
-      const channelId = process.env.NUXT_SLACK_CHANNEL_ID
-      if (!channelId) {
-        consola.warn('NUXT_SLACK_CHANNEL_ID not configured, falling back to webhook')
-      } else {
-        const response = await $fetch<{ ok: boolean, ts: string, error?: string }>('https://slack.com/api/chat.postMessage', {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${slackBotToken}`,
-            'Content-Type': 'application/json'
-          },
-          body: {
-            channel: channelId,
-            text: options.message,
-            ...(options.threadTs && { thread_ts: options.threadTs }),
-            ...(options.attachments && { attachments: options.attachments })
-          }
-        })
-
-        if (response.ok) {
-          messageTs = response.ts
-          consola.success('Slack notification sent via API successfully')
-        } else {
-          consola.error('Failed to send via Slack API:', response.error)
-          throw new Error(response.error)
-        }
+    const response = await $fetch<{ ok: boolean, ts: string, error?: string }>('https://slack.com/api/chat.postMessage', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${slackBotToken}`,
+        'Content-Type': 'application/json'
+      },
+      body: {
+        channel: channelId,
+        text: options.message,
+        ...(options.threadTs && { thread_ts: options.threadTs }),
+        ...(options.attachments && { attachments: options.attachments })
       }
+    })
+
+    if (!response.ok) {
+      consola.error('Failed to send Slack notification:', response.error)
+      return
     }
 
-    // Fallback to webhook if no bot token or API failed
-    if (!messageTs) {
-      await $fetch(slackWebhookUrl, {
-        method: 'POST',
-        body: slackMessage,
-        headers: {
-          'Content-Type': 'application/json'
-        }
-      })
-      consola.success('Slack notification sent via webhook successfully')
-    }
+    consola.success('Slack notification sent successfully')
 
-    // If there's a file attachment and we have a bot token, upload the file
-    if (options.fileAttachment && slackBotToken) {
+    // Upload file attachment if provided
+    if (options.fileAttachment) {
       await uploadFileToSlack(options.fileAttachment, slackBotToken)
-    } else if (options.fileAttachment && !slackBotToken) {
-      consola.warn('File attachment requested but NUXT_SLACK_BOT_TOKEN not configured')
     }
 
-    return messageTs
+    return response.ts
   } catch (error) {
     consola.error('Failed to send Slack notification:', error)
     return undefined
@@ -130,11 +77,10 @@ export async function sendSlackNotification(options: SlackNotificationOptions): 
 
 async function uploadFileToSlack(fileAttachment: NonNullable<SlackNotificationOptions['fileAttachment']>, botToken: string): Promise<void> {
   try {
-    // Get the channel ID from the webhook URL (extract from URL pattern)
     const channelId = process.env.NUXT_SLACK_CHANNEL_ID
 
     if (!channelId) {
-      consola.warn('NUXT_SLACK_CHANNEL_ID not configured, cannot upload file')
+      consola.error('NUXT_SLACK_CHANNEL_ID not configured, cannot upload file')
       return
     }
 
