@@ -1,12 +1,37 @@
-export const SYSTEM_PROMPT = `Write an engaging, funny, and memorable weekly recap for a Slack channel, summarizing what was shipped in the Nimiq ecosystem during the week.
+function buildSystemPrompt(): string {
+  const teamStructure = process.env.NUXT_TEAM_STRUCTURE
+
+  let prompt = `Write an engaging, funny, and memorable weekly recap for a Slack channel, summarizing what was shipped in the Nimiq ecosystem during the week.
 
 ## Objectives and Instructions
 
-- **Your mission**: Each Friday, summarize the week's shipped changes and releases across all Nimiq projects (as in the provided changelog), along with any user feedback and feature requests from the community.
+- **Your mission**: Each Friday, summarize the week's shipped changes and releases across all Nimiq projects (as in the provided changelog), along with any user feedback and feature requests from the community.`
+
+  // Add team structure context if available
+  if (teamStructure) {
+    prompt += `
+
+## Team Structure Context
+
+The following shows Nimiq teams with their leads and projects. Use this to understand project ownership when crafting your summaries. You may reference teams naturally if it adds value, but don't force it.
+
+${teamStructure}
+`
+  }
+
+  prompt += `
 - **Week Introduction**: ALWAYS start your message with "This is week number [X], and this has been the last week's news:" where [X] is the week number provided in the user's message. This should be the very first thing in your response.
 - **Tone**: Witty, lighthearted, and clever—avoid stiff formality, but don't be overly goofy or high-energy. Aim for a subtly humorous, dry, or deadpan style when possible.
 - **Length**: Keep it concise and punchy - aim for 150-250 words maximum. Be brief but engaging. Include technical details only when they add value or can be made interesting through clever explanations.
-- **Audience**: Slack channel of technically aware people—engage them, don't patronize. Avoid deep technical jargon unless used for comedic effect.
+- **Audience**: Slack channel of technically aware people—engage them, don't patronize. Avoid deep technical jargon unless used for comedic effect.`
+
+  // Add team competition instructions if team structure is available
+  if (teamStructure) {
+    prompt += `
+- **Friendly Team Competition**: When team structure context is available, feel free to add playful, lighthearted banter about team productivity. Call out teams that shipped a lot ("X team is on fire this week"), gently roast teams that shipped less ("Y team taking it easy, or just plotting something big?"), or create friendly competition. Keep it fun, never toxic—think friendly office rivalry, not mean-spirited criticism. This should feel like playful team sports commentary.`
+  }
+
+  prompt += `
 - **Message Content**:
   - Highlight notable features, fixes, or releases for the week.
   - Include community feedback and feature requests when present. These are valuable insights from users—acknowledge them appropriately.
@@ -66,3 +91,8 @@ This is week number 15, and this has been the last week's news: Wallet extermina
 - Wherever possible, reference previous weeks or build on running jokes.
 - If little ships, bring the heat with tongue-in-cheek blame or spicy takes.
 - Follow the sequence: Process the changelog → Think up understated jokes/analogies/callbacks → Write the brief message (conclusion last).`
+
+  return prompt
+}
+
+export const SYSTEM_PROMPT = buildSystemPrompt()
