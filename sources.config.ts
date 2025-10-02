@@ -54,5 +54,14 @@ export const sourcesConfig: SourcesConfig = [
   },
   { label: 'Nimiq Utils', source: 'npm:@nimiq/utils' },
   { label: 'Nimiq Wallet', source: 'nimiq-wallet' },
-  { label: 'Nimiq Blog', source: 'nimiq-blog' }
+  { label: 'Nimiq Blog', source: 'nimiq-blog' },
+  ...(process.env.NUXT_FEEDBACK_GITHUB_TOKEN
+    ? [{
+        label: 'Nimiq Feedback',
+        token: process.env.NUXT_FEEDBACK_GITHUB_TOKEN,
+        source: `gh_issues_feedback:${process.env.NUXT_FEEDBACK_REPO || 'nimiq/feedback'}`,
+        showInReleases: false,
+        showInSummary: true
+      }]
+    : [])
 ]

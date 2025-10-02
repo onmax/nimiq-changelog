@@ -1,6 +1,7 @@
 import type { SourceMetadata, SourcesConfig, SourceGroup, SourceItem, SourceConfig } from './sources/types'
 import { fetchGitHubReleases } from './sources/github'
 import { fetchGitHubPullRequests } from './sources/github-pull-requests'
+import { fetchGitHubIssuesFeedback } from './sources/github-issues-feedback'
 import { fetchGitLabReleases } from './sources/gitlab'
 import { fetchNpmReleases } from './sources/npm'
 import { fetchNimiqWalletReleases } from './sources/nimiq-wallet'
@@ -42,6 +43,11 @@ export const sources: Record<string, SourceMetadata> = {
     name: 'Nimiq Blog',
     description: 'Fetch latest blog posts from nimiq.com/blog',
     fetcher: fetchNimiqBlogReleases
+  },
+  'github-issues-feedback': {
+    name: 'GitHub Issues Feedback',
+    description: 'Fetch open issues from nimiq/feedback repository for user feedback tracking',
+    fetcher: fetchGitHubIssuesFeedback
   }
 }
 
@@ -96,6 +102,18 @@ export function normalizeSourceItem(item: SourceItem, groupToken?: string): { ki
         config: {
           enabled: true,
           packages: [packageName]
+        }
+      }
+    }
+
+    if (item.startsWith('gh_issues_feedback:')) {
+      const repo = item.slice(19) // Remove 'gh_issues_feedback:' prefix
+      return {
+        kind: 'github-issues-feedback',
+        config: {
+          enabled: true,
+          token: groupToken,
+          repos: [repo]
         }
       }
     }
