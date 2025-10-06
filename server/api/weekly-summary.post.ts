@@ -117,7 +117,17 @@ export default defineEventHandler(async () => {
     const key = `weekly-summary-${now.getFullYear()}-${prevWeek}`
     const prevSummary = await hubKV().get(key)
     if (prevSummary) {
-      previousSummaries.push(`Week ${prevWeek}: ${prevSummary}`)
+      try {
+        // Try to parse as JSON (new format)
+        const summaryStr = typeof prevSummary === 'string' ? prevSummary : JSON.stringify(prevSummary)
+        const parsed = JSON.parse(summaryStr)
+        const firstSummaryText = parsed.summaries?.[0]?.text || summaryStr
+        previousSummaries.push(`Week ${prevWeek}: ${firstSummaryText}`)
+      } catch {
+        // Fallback to old format (plain string)
+        const summaryStr = typeof prevSummary === 'string' ? prevSummary : JSON.stringify(prevSummary)
+        previousSummaries.push(`Week ${prevWeek}: ${summaryStr}`)
+      }
     }
   }
 
@@ -149,9 +159,18 @@ export default defineEventHandler(async () => {
 
   const summaries = await Promise.all(summaryPromises)
 
-  // Store this week's summary (use the first model's summary for storage/backwards compatibility)
+  // Store all summaries in KV for backup (in case Slack fails)
   const currentKey = `weekly-summary-${now.getFullYear()}-${weekNumber}`
-  await hubKV().set(currentKey, summaries[0]?.text || '')
+  const summaryData = {
+    week: weekNumber,
+    year: now.getFullYear(),
+    date: now.toISOString(),
+    releaseCount: recentReleases.length,
+    summaries: summaries.map(s => ({ model: s.name, text: s.text })),
+    changelog: formatReleasesForSlack(recentReleases)
+  }
+
+  await hubKV().set(currentKey, JSON.stringify(summaryData))
 
   // Clean up summaries older than 4 weeks
   for (let i = 5; i <= 8; i++) {
@@ -167,39 +186,49 @@ export default defineEventHandler(async () => {
   const currentDate = new Date()
   const filename = `nimiq-changelog-week-${weekNumber}-${currentDate.getFullYear()}.md`
 
-  // Send first model response with changelog attachment
-  const firstSummary = summaries[0]
-  if (!firstSummary) {
-    throw new Error('No summaries generated')
-  }
-  const initialMessage = `🤖 **${firstSummary.name}**\n\n${firstSummary.text}`
-
-  const messageTs = await sendSlackNotification({
-    message: initialMessage,
-    fileAttachment: {
-      content: changelogText,
-      filename: filename,
-      filetype: 'markdown',
-      title: `📄 Weekly Changelog (${recentReleases.length} release${recentReleases.length !== 1 ? 's' : ''})`
+  // Try to send to Slack, but don't fail if it doesn't work
+  let slackSuccess = false
+  try {
+    // Send first model response with changelog attachment
+    const firstSummary = summaries[0]
+    if (!firstSummary) {
+      throw new Error('No summaries generated')
     }
-  })
+    const initialMessage = `🤖 **${firstSummary.name}**\n\n${firstSummary.text}`
 
-  // Send remaining model responses as threaded replies
-  for (let i = 1; i < summaries.length; i++) {
-    const summary = summaries[i]
-    if (summary) {
-      const threadMessage = `🤖 **${summary.name}**\n\n${summary.text}`
+    const messageTs = await sendSlackNotification({
+      message: initialMessage,
+      fileAttachment: {
+        content: changelogText,
+        filename: filename,
+        filetype: 'markdown',
+        title: `📄 Weekly Changelog (${recentReleases.length} release${recentReleases.length !== 1 ? 's' : ''})`
+      }
+    })
 
-      await sendSlackNotification({
-        message: threadMessage,
-        threadTs: messageTs
-      })
+    // Send remaining model responses as threaded replies
+    for (let i = 1; i < summaries.length; i++) {
+      const summary = summaries[i]
+      if (summary) {
+        const threadMessage = `🤖 **${summary.name}**\n\n${summary.text}`
+
+        await sendSlackNotification({
+          message: threadMessage,
+          threadTs: messageTs
+        })
+      }
     }
+
+    slackSuccess = !!messageTs
+  } catch (error) {
+    console.error('Failed to send Slack notification, but summaries are stored in KV:', error)
   }
 
   return {
     success: true,
+    slackSent: slackSuccess,
     releaseCount: recentReleases.length,
-    summaries: summaries.map(s => ({ model: s.name, message: s.text }))
+    summaries: summaries.map(s => ({ model: s.name, summary: '[hidden for security]' })),
+    kvKey: currentKey
   }
 })

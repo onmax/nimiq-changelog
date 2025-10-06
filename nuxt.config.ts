@@ -113,8 +113,8 @@ export default defineNuxtConfig({
   safeRuntimeConfig: {
     $schema: v.object({
       webhookSecret: v.string(),
-      slackBotToken: v.pipe(v.string(), v.minLength(1, 'NUXT_SLACK_BOT_TOKEN is required')),
-      slackChannelId: v.pipe(v.string(), v.minLength(1, 'NUXT_SLACK_CHANNEL_ID is required')),
+      slackBotToken: v.optional(v.string()),
+      slackChannelId: v.optional(v.string()),
       sources: v.array(
         v.object({
           label: v.string(),

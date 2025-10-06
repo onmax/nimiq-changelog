@@ -29,12 +29,13 @@ interface SlackNotificationOptions {
 export async function sendSlackNotification(options: SlackNotificationOptions): Promise<string | undefined> {
   // Only send notifications in production unless explicitly testing
   if (!isProduction && !process.env.NUXT_SLACK_WEBHOOK_URL_FORCE_DEV) {
-    consola.info('Skipping Slack notification in development:', options.message)
+    consola.info('Skipping Slack notification in development')
     return
   }
 
-  const slackBotToken = process.env.NUXT_SLACK_BOT_TOKEN
-  const channelId = process.env.NUXT_SLACK_CHANNEL_ID
+  const runtimeConfig = useRuntimeConfig()
+  const slackBotToken = runtimeConfig.slackBotToken
+  const channelId = runtimeConfig.slackChannelId
 
   if (!slackBotToken || !channelId) {
     consola.error('NUXT_SLACK_BOT_TOKEN and NUXT_SLACK_CHANNEL_ID are required')
@@ -61,7 +62,7 @@ export async function sendSlackNotification(options: SlackNotificationOptions): 
       return
     }
 
-    consola.success('Slack notification sent successfully')
+    consola.success('Slack notification sent successfully (message hidden for security)')
 
     // Upload file attachment if provided
     if (options.fileAttachment) {
@@ -77,7 +78,8 @@ export async function sendSlackNotification(options: SlackNotificationOptions): 
 
 async function uploadFileToSlack(fileAttachment: NonNullable<SlackNotificationOptions['fileAttachment']>, botToken: string): Promise<void> {
   try {
-    const channelId = process.env.NUXT_SLACK_CHANNEL_ID
+    const runtimeConfig = useRuntimeConfig()
+    const channelId = runtimeConfig.slackChannelId
 
     if (!channelId) {
       consola.error('NUXT_SLACK_CHANNEL_ID not configured, cannot upload file')
