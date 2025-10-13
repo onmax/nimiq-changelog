@@ -33,15 +33,9 @@ export async function sendSlackNotification(options: SlackNotificationOptions): 
     return
   }
 
-  consola.info('Attempting to send Slack notification...')
-  consola.info('isProduction:', isProduction)
-
   const runtimeConfig = useRuntimeConfig()
   const slackBotToken = runtimeConfig.slackBotToken
   const channelId = runtimeConfig.slackChannelId
-
-  consola.info('Bot token exists:', !!slackBotToken)
-  consola.info('Channel ID:', channelId)
 
   if (!slackBotToken || !channelId) {
     consola.error('NUXT_SLACK_BOT_TOKEN and NUXT_SLACK_CHANNEL_ID are required')
@@ -49,7 +43,6 @@ export async function sendSlackNotification(options: SlackNotificationOptions): 
   }
 
   try {
-    consola.info('Calling Slack API...')
     const response = await $fetch<{ ok: boolean, ts: string, error?: string }>('https://slack.com/api/chat.postMessage', {
       method: 'POST',
       headers: {
@@ -64,14 +57,12 @@ export async function sendSlackNotification(options: SlackNotificationOptions): 
       }
     })
 
-    consola.info('Slack API response:', { ok: response.ok, error: response.error })
-
     if (!response.ok) {
       consola.error('Failed to send Slack notification:', response.error)
       return
     }
 
-    consola.success('Slack notification sent successfully (message hidden for security)')
+    consola.success('Slack notification sent successfully')
 
     // Upload file attachment if provided
     if (options.fileAttachment) {
@@ -95,30 +86,35 @@ async function uploadFileToSlack(fileAttachment: NonNullable<SlackNotificationOp
       return
     }
 
-    // Create form data for file upload
-    const formData = new FormData()
-    const fileBlob = new Blob([fileAttachment.content], { type: 'text/markdown' })
-
-    formData.append('file', fileBlob, fileAttachment.filename)
-    formData.append('channels', channelId)
-    formData.append('filetype', fileAttachment.filetype)
-
-    if (fileAttachment.title) {
-      formData.append('title', fileAttachment.title)
-    }
-
-    const response = await $fetch<{ ok: boolean, error?: string }>('https://slack.com/api/files.upload', {
+    // Step 1: Get upload URL using files.getUploadURLExternal
+    const uploadUrlResponse = await $fetch<{ ok: boolean, upload_url?: string, file_id?: string, error?: string }>('https://slack.com/api/files.getUploadURLExternal', {
       method: 'POST',
-      headers: {
-        Authorization: `Bearer ${botToken}`
-      },
-      body: formData
+      headers: { Authorization: `Bearer ${botToken}`, 'Content-Type': 'application/json' },
+      body: { filename: fileAttachment.filename, length: fileAttachment.content.length }
     })
 
-    if (response.ok) {
+    if (!uploadUrlResponse.ok || !uploadUrlResponse.upload_url || !uploadUrlResponse.file_id) {
+      consola.error('Failed to get upload URL:', uploadUrlResponse.error)
+      return
+    }
+
+    // Step 2: Upload file content to the URL
+    await $fetch(uploadUrlResponse.upload_url, {
+      method: 'POST',
+      body: fileAttachment.content
+    })
+
+    // Step 3: Complete the upload and share to channel
+    const completeResponse = await $fetch<{ ok: boolean, error?: string }>('https://slack.com/api/files.completeUploadExternal', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${botToken}`, 'Content-Type': 'application/json' },
+      body: { files: [{ id: uploadUrlResponse.file_id, title: fileAttachment.title || fileAttachment.filename }], channel_id: channelId }
+    })
+
+    if (completeResponse.ok) {
       consola.success('File uploaded to Slack successfully')
     } else {
-      consola.error('Failed to upload file to Slack:', response.error)
+      consola.error('Failed to complete file upload:', completeResponse.error)
     }
   } catch (error) {
     consola.error('Failed to upload file to Slack:', error)
