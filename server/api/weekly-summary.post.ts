@@ -189,7 +189,7 @@ export default defineEventHandler(async () => {
   // Try to send to Slack, but don't fail if it doesn't work
   let slackSuccess = false
   try {
-    // Send first model response with changelog attachment
+    // Send first model response
     const firstSummary = summaries[0]
     if (!firstSummary) {
       throw new Error('No summaries generated')
@@ -197,13 +197,7 @@ export default defineEventHandler(async () => {
     const initialMessage = `🤖 **${firstSummary.name}**\n\n${firstSummary.text}`
 
     const messageTs = await sendSlackNotification({
-      message: initialMessage,
-      fileAttachment: {
-        content: changelogText,
-        filename: filename,
-        filetype: 'markdown',
-        title: `📄 Weekly Changelog (${recentReleases.length} release${recentReleases.length !== 1 ? 's' : ''})`
-      }
+      message: initialMessage
     })
 
     // Send remaining model responses as threaded replies
@@ -217,6 +211,20 @@ export default defineEventHandler(async () => {
           threadTs: messageTs
         })
       }
+    }
+
+    // Send file attachment as final threaded reply
+    if (messageTs) {
+      await sendSlackNotification({
+        message: `📄 Weekly Changelog (${recentReleases.length} release${recentReleases.length !== 1 ? 's' : ''})`,
+        threadTs: messageTs,
+        fileAttachment: {
+          content: changelogText,
+          filename: filename,
+          filetype: 'markdown',
+          title: `📄 Weekly Changelog (${recentReleases.length} release${recentReleases.length !== 1 ? 's' : ''})`
+        }
+      })
     }
 
     slackSuccess = !!messageTs
