@@ -88,11 +88,19 @@ async function uploadFileToSlack(fileAttachment: NonNullable<SlackNotificationOp
 
     // Step 1: Get upload URL using files.getUploadURLExternal
     const contentBytes = new TextEncoder().encode(fileAttachment.content)
+
+    consola.info('Requesting upload URL for file:', {
+      filename: fileAttachment.filename,
+      length: contentBytes.length
+    })
+
     const uploadUrlResponse = await $fetch<{ ok: boolean, upload_url?: string, file_id?: string, error?: string }>('https://slack.com/api/files.getUploadURLExternal', {
       method: 'POST',
       headers: { 'Authorization': `Bearer ${botToken}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({ filename: fileAttachment.filename, length: contentBytes.length })
     })
+
+    consola.info('Upload URL response:', uploadUrlResponse)
 
     if (!uploadUrlResponse.ok || !uploadUrlResponse.upload_url || !uploadUrlResponse.file_id) {
       consola.error('Failed to get upload URL:', uploadUrlResponse.error)
