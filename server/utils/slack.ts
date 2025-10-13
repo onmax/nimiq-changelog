@@ -94,10 +94,15 @@ async function uploadFileToSlack(fileAttachment: NonNullable<SlackNotificationOp
       length: contentBytes.length
     })
 
+    // Use form-urlencoded format as required by Slack API
+    const params = new URLSearchParams()
+    params.append('filename', fileAttachment.filename)
+    params.append('length', contentBytes.length.toString())
+
     const uploadUrlResponse = await $fetch<{ ok: boolean, upload_url?: string, file_id?: string, error?: string }>('https://slack.com/api/files.getUploadURLExternal', {
       method: 'POST',
-      headers: { 'Authorization': `Bearer ${botToken}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ filename: fileAttachment.filename, length: contentBytes.length })
+      headers: { 'Authorization': `Bearer ${botToken}`, 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: params.toString()
     })
 
     consola.info('Upload URL response:', uploadUrlResponse)
