@@ -90,7 +90,7 @@ async function uploadFileToSlack(fileAttachment: NonNullable<SlackNotificationOp
     const contentBytes = new TextEncoder().encode(fileAttachment.content)
     const uploadUrlResponse = await $fetch<{ ok: boolean, upload_url?: string, file_id?: string, error?: string }>('https://slack.com/api/files.getUploadURLExternal', {
       method: 'POST',
-      headers: { Authorization: `Bearer ${botToken}`, 'Content-Type': 'application/json' },
+      headers: { 'Authorization': `Bearer ${botToken}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({ filename: fileAttachment.filename, length: contentBytes.length })
     })
 
@@ -108,7 +108,7 @@ async function uploadFileToSlack(fileAttachment: NonNullable<SlackNotificationOp
     // Step 3: Complete the upload and share to channel
     const completeResponse = await $fetch<{ ok: boolean, error?: string }>('https://slack.com/api/files.completeUploadExternal', {
       method: 'POST',
-      headers: { Authorization: `Bearer ${botToken}`, 'Content-Type': 'application/json' },
+      headers: { 'Authorization': `Bearer ${botToken}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({ files: [{ id: uploadUrlResponse.file_id, title: fileAttachment.title || fileAttachment.filename }], channel_id: channelId })
     })
 
