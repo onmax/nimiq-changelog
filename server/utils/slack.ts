@@ -33,9 +33,15 @@ export async function sendSlackNotification(options: SlackNotificationOptions): 
     return
   }
 
+  consola.info('Attempting to send Slack notification...')
+  consola.info('isProduction:', isProduction)
+
   const runtimeConfig = useRuntimeConfig()
   const slackBotToken = runtimeConfig.slackBotToken
   const channelId = runtimeConfig.slackChannelId
+
+  consola.info('Bot token exists:', !!slackBotToken)
+  consola.info('Channel ID:', channelId)
 
   if (!slackBotToken || !channelId) {
     consola.error('NUXT_SLACK_BOT_TOKEN and NUXT_SLACK_CHANNEL_ID are required')
@@ -43,6 +49,7 @@ export async function sendSlackNotification(options: SlackNotificationOptions): 
   }
 
   try {
+    consola.info('Calling Slack API...')
     const response = await $fetch<{ ok: boolean, ts: string, error?: string }>('https://slack.com/api/chat.postMessage', {
       method: 'POST',
       headers: {
@@ -56,6 +63,8 @@ export async function sendSlackNotification(options: SlackNotificationOptions): 
         ...(options.attachments && { attachments: options.attachments })
       }
     })
+
+    consola.info('Slack API response:', { ok: response.ok, error: response.error })
 
     if (!response.ok) {
       consola.error('Failed to send Slack notification:', response.error)
