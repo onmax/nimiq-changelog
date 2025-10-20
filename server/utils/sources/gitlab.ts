@@ -9,6 +9,16 @@ import { universalFetch } from '../fetch'
 async function processReleaseBody(bodyContent: string, repo: string) {
   const body = (await parseMarkdown(bodyContent)).body
 
+  // Check if the release body has headers (h2, h3, etc.) - if so, it's already well-formatted
+  const hasHeaders = body.children?.some((child: any) =>
+    child.type === 'element' && ['h1', 'h2', 'h3', 'h4'].includes(child.tag)
+  )
+
+  // If the release has headers, preserve the original formatting
+  if (hasHeaders) {
+    return body
+  }
+
   // Extract commit messages from the structured body
   const commitMessages = extractCommitMessages(body)
 
