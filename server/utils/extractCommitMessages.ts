@@ -40,7 +40,7 @@ export function extractCommitMessages(body: MDCRoot): string[] {
           // Clean up common patterns in commit messages
           const cleanMessage = message
             .replace(/\s+/g, ' ') // Normalize whitespace
-            .replace(/\([a-f0-9]{7,8}\)$/, '') // Remove commit hash at end
+            .replace(/\([a-f0-9]{7,40}\)$/, '') // Remove commit hash at end (short or full)
             .trim()
 
           // Skip merge commit messages and very short messages
