@@ -31,6 +31,11 @@ export const sourcesConfig: SourcesConfig = [
   {
     label: 'Developer Center',
     token: process.env.NUXT_GITHUB_TOKEN || '',
+    source: 'gh:nimiq/developer-center'
+  },
+  {
+    label: 'Developer Center PRs',
+    token: process.env.NUXT_GITHUB_TOKEN || '',
     source: {
       kind: 'gh_pr',
       config: {
@@ -38,7 +43,9 @@ export const sourcesConfig: SourcesConfig = [
         since: '2024-01-01T00:00:00Z',
         state: 'closed'
       }
-    }
+    },
+    showInReleases: true,
+    showInSummary: true
   },
   {
     label: 'Nimiq Pay',
