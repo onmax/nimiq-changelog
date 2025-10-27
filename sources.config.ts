@@ -18,6 +18,15 @@ export const sourcesConfig: SourcesConfig = [
         showInSummary: true
       }]
     : []),
+  ...(process.env.NUXT_CASH_LINK_SOURCE
+    ? [{
+        label: process.env.NUXT_CASH_LINK_LABEL || 'Internal Project 2',
+        token: process.env.NUXT_PRIVATE_GITHUB_TOKEN || process.env.NUXT_GITHUB_TOKEN || '',
+        source: process.env.NUXT_CASH_LINK_SOURCE,
+        showInReleases: false,
+        showInSummary: true
+      }]
+    : []),
   {
     label: 'Nimiq MCP',
     token: process.env.NUXT_GITHUB_TOKEN || '',
@@ -40,6 +49,20 @@ export const sourcesConfig: SourcesConfig = [
       kind: 'gh_pr',
       config: {
         repos: ['nimiq/developer-center'],
+        since: '2024-01-01T00:00:00Z',
+        state: 'closed'
+      }
+    },
+    showInReleases: true,
+    showInSummary: true
+  },
+  {
+    label: 'Tutorial',
+    token: process.env.NUXT_GITHUB_TOKEN || '',
+    source: {
+      kind: 'gh_pr',
+      config: {
+        repos: ['nimiq/tutorial'],
         since: '2024-01-01T00:00:00Z',
         state: 'closed'
       }
