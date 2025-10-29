@@ -71,7 +71,10 @@ export default defineNuxtConfig({
     experimental: {
       wasm: true
     },
-    preset: 'cloudflare-module'
+    preset: 'cloudflare-module',
+    externals: {
+      inline: ['@ai-sdk/provider-utils']
+    }
   },
   hub: {
     cache: true,
