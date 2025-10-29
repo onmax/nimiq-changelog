@@ -152,7 +152,16 @@ export default defineEventHandler(async () => {
     const { text } = await generateText({
       model,
       system: SYSTEM_PROMPT,
-      messages: [{ role: 'user', content: context }]
+      messages: [{ role: 'user', content: context }],
+      // GPT-5 optimizations: minimal reasoning for speed, low verbosity for conciseness
+      ...(name.includes('GPT-5') && {
+        experimental_providerMetadata: {
+          openai: {
+            reasoning_effort: 'minimal',
+            verbosity: 'low'
+          }
+        }
+      })
     })
     return { name, text }
   })

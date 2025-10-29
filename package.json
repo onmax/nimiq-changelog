@@ -14,30 +14,30 @@
     "test": "vitest"
   },
   "dependencies": {
-    "@ai-sdk/openai": "^2.0.28",
-    "@iconify-json/lucide": "^1.2.66",
-    "@iconify-json/simple-icons": "^1.2.50",
+    "@ai-sdk/openai": "^2.0.56",
+    "@iconify-json/lucide": "^1.2.71",
+    "@iconify-json/simple-icons": "^1.2.56",
     "@nuxt/fonts": "^0.11.4",
-    "@nuxt/icon": "^2.0.0",
-    "@nuxt/ui": "^4.0.0-alpha.1",
+    "@nuxt/icon": "^2.1.0",
+    "@nuxt/ui": "^4.1.0",
     "@nuxthub/core": "^0.9.0",
-    "@nuxtjs/mdc": "0.17.4",
-    "@vueuse/nuxt": "13.9.0",
-    "ai": "^5.0.41",
-    "nimiq-css": "^1.0.0-beta.76",
-    "nimiq-icons": "1.0.0-beta.76",
-    "nuxt": "4.1.0",
+    "@nuxtjs/mdc": "^0.18.0",
+    "@vueuse/nuxt": "^14.0.0",
+    "ai": "6.0.0-beta.82",
+    "nimiq-css": "^1.0.0-beta.136",
+    "nimiq-icons": "^1.0.0-beta.136",
+    "nuxt": "^4.2.0",
     "nuxt-safe-runtime-config": "^0.0.3",
     "valibot": "^1.1.0",
-    "vue": "^3.5.21"
+    "vue": "^3.5.22"
   },
   "devDependencies": {
-    "@nuxt/eslint": "^1.9.0",
-    "@types/node": "^22.0.0",
-    "eslint": "^9.35.0",
-    "typescript": "^5.9.2",
-    "vitest": "^2.0.0",
-    "vue-tsc": "^3.0.6"
+    "@nuxt/eslint": "^1.10.0",
+    "@types/node": "^22.18.6",
+    "eslint": "^9.38.0",
+    "typescript": "^5.9.3",
+    "vitest": "^2.1.9",
+    "vue-tsc": "^3.1.2"
   },
   "resolutions": {
     "unimport": "4.1.1"
