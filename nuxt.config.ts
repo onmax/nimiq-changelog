@@ -70,8 +70,7 @@ export default defineNuxtConfig({
   nitro: {
     experimental: {
       wasm: true
-    },
-    preset: 'cloudflare-module'
+    }
   },
   hub: {
     cache: true,
