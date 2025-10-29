@@ -71,10 +71,7 @@ export default defineNuxtConfig({
     experimental: {
       wasm: true
     },
-    preset: 'cloudflare-module',
-    alias: {
-      '@valibot/to-json-schema': 'unenv/runtime/mock/empty'
-    }
+    preset: 'cloudflare-module'
   },
   hub: {
     cache: true,

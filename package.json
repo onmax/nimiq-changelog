@@ -23,7 +23,7 @@
     "@nuxthub/core": "^0.9.0",
     "@nuxtjs/mdc": "^0.18.0",
     "@vueuse/nuxt": "^14.0.0",
-    "ai": "6.0.0-beta.82",
+    "ai": "^5.0.81",
     "nimiq-css": "^1.0.0-beta.136",
     "nimiq-icons": "^1.0.0-beta.136",
     "nuxt": "^4.2.0",
