@@ -72,8 +72,8 @@ export default defineNuxtConfig({
       wasm: true
     },
     preset: 'cloudflare-module',
-    externals: {
-      inline: ['@ai-sdk/provider-utils']
+    alias: {
+      '@valibot/to-json-schema': 'unenv/runtime/mock/empty'
     }
   },
   hub: {
