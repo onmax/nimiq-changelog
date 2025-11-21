@@ -28,13 +28,17 @@ export async function fetchLinearDoneIssues(daysAgo = 7): Promise<LinearIssue[]>
 
   consola.info(`Linear API Key length: ${linearApiKey.length}, starts with: ${linearApiKey.substring(0, 10)}`)
 
+  const since = new Date()
+  since.setDate(since.getDate() - daysAgo)
+  const sinceISO = since.toISOString()
+
   const query = `
-    query IssuesQuery($after: String) {
+    query IssuesQuery($after: String, $since: DateTimeOrDuration!) {
       issues(
         first: 50
         after: $after
         filter: {
-          completedAt: { gte: "-${daysAgo}d" }
+          completedAt: { gte: $since }
           state: { type: { eq: "completed" } }
         }
       ) {
@@ -69,7 +73,7 @@ export async function fetchLinearDoneIssues(daysAgo = 7): Promise<LinearIssue[]>
           'Authorization': linearApiKey,
           'Content-Type': 'application/json'
         },
-        body: { query, variables: { after: cursor } }
+        body: { query, variables: { after: cursor, since: sinceISO } }
       })
 
       if (response.errors) {
