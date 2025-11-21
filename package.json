@@ -22,6 +22,7 @@
     "@nuxt/ui": "^4.1.0",
     "@nuxthub/core": "^0.9.0",
     "@nuxtjs/mdc": "^0.18.0",
+    "@toon-format/toon": "^1.2.0",
     "@vueuse/nuxt": "^14.0.0",
     "ai": "^5.0.81",
     "nimiq-css": "^1.0.0-beta.136",

@@ -2,6 +2,7 @@ import { generateText } from 'ai'
 import { openai } from '@ai-sdk/openai'
 import { consola } from 'consola'
 import { isProduction } from 'std-env'
+import { encode } from '@toon-format/toon'
 import { sendSlackNotification } from '../utils/slack'
 import { LINEAR_SYSTEM_PROMPT } from '../utils/systemPromptLinear'
 import { fetchLinearDoneIssues, groupIssuesByProject } from '../utils/linear'
@@ -78,7 +79,7 @@ function formatIssuesForSlackFile(groupedByProject: Record<string, { team: strin
 }
 
 /**
- * Format issues for LLM context in XML format with descriptions
+ * Format issues for LLM context in TOON format with descriptions
  */
 function formatIssuesForLLM(groupedByProject: Record<string, { team: string, issues: any[] }>): string {
   const byTeam: Record<string, { projects: Record<string, any[]> }> = {}
@@ -90,27 +91,20 @@ function formatIssuesForLLM(groupedByProject: Record<string, { team: string, iss
     byTeam[team]!.projects[projectName] = issues
   })
 
-  let output = '<teams>\n'
-  Object.entries(byTeam).forEach(([teamName, { projects }]) => {
-    output += `  <team name="${teamName}">\n`
-    Object.entries(projects).forEach(([projectName, issues]) => {
-      output += `    <project name="${projectName}">\n`
-      issues.forEach((issue) => {
-        output += `      <issue>\n`
-        output += `        <identifier>${issue.identifier}</identifier>\n`
-        output += `        <title>${issue.title}</title>\n`
-        if (issue.description) {
-          output += `        <description>${issue.description}</description>\n`
-        }
-        output += `      </issue>\n`
-      })
-      output += `    </project>\n`
-    })
-    output += `  </team>\n`
-  })
-  output += '</teams>'
+  // Convert to array-based structure for optimal TOON encoding
+  const teams = Object.entries(byTeam).map(([teamName, { projects }]) => ({
+    team: teamName,
+    projects: Object.entries(projects).map(([projectName, issues]) => ({
+      project: projectName,
+      issues: issues.map(issue => ({
+        identifier: issue.identifier,
+        title: issue.title,
+        description: issue.description || ''
+      }))
+    }))
+  }))
 
-  return output
+  return encode({ teams })
 }
 
 export default defineEventHandler(async () => {
