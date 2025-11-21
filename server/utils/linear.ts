@@ -92,7 +92,9 @@ export async function fetchLinearDoneIssues(daysAgo = 7): Promise<LinearIssue[]>
     return allIssues
   } catch (error: any) {
     consola.error('Failed to fetch Linear issues:', error)
-    consola.error('Error details:', { message: error?.message, data: error?.data, statusCode: error?.statusCode })
+    if (error?.data?.errors) {
+      consola.error('Linear API error details:', JSON.stringify(error.data.errors, null, 2))
+    }
     return []
   }
 }
