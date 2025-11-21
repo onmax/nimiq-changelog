@@ -56,6 +56,8 @@ export default defineNuxtConfig({
     webhookSecret: process.env.NUXT_WEBHOOK_SECRET || '',
     slackBotToken: process.env.NUXT_SLACK_BOT_TOKEN,
     slackChannelId: process.env.NUXT_SLACK_CHANNEL_ID,
+    googleApiKey: process.env.GOOGLE_API_KEY,
+    linearApiKey: process.env.LINEAR_API_KEY,
     sources: sourcesConfig
   },
 
@@ -114,6 +116,8 @@ export default defineNuxtConfig({
       webhookSecret: v.string(),
       slackBotToken: v.optional(v.string()),
       slackChannelId: v.optional(v.string()),
+      googleApiKey: v.optional(v.string()),
+      linearApiKey: v.optional(v.string()),
       sources: v.array(
         v.object({
           label: v.string(),

@@ -37,7 +37,8 @@
     "eslint": "^9.38.0",
     "typescript": "^5.9.3",
     "vitest": "^2.1.9",
-    "vue-tsc": "^3.1.2"
+    "vue-tsc": "^3.1.2",
+    "wrangler": "^4.50.0"
   },
   "resolutions": {
     "unimport": "4.1.1"

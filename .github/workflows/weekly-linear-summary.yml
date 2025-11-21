@@ -1,0 +1,57 @@
+name: Weekly Linear Summary
+
+on:
+  schedule:
+    - cron: '0 15 * * 5' # Runs Fridays at 3pm UTC
+  workflow_dispatch: # Allows manual triggering of the workflow
+
+jobs:
+  weekly-linear-summary:
+    name: "Generate Weekly Linear Summary"
+    runs-on: ubuntu-latest
+    continue-on-error: false
+
+    steps:
+      - name: Generate and send weekly Linear summary
+        env:
+          WEBHOOK_SECRET: ${{ secrets.WEBHOOK_SECRET }}
+        run: |
+          set -eo pipefail
+          echo "🔄 Generating weekly Linear summary..."
+
+          # Get the production URL from NuxtHub deployment
+          ENDPOINT="https://nimiq-changelog.je-cf9.workers.dev"
+
+          # Call the weekly Linear summary endpoint with authentication
+          resp=$(curl -sS -w "HTTPSTATUS:%{http_code}" \
+            -X POST \
+            -H "Authorization: Bearer $WEBHOOK_SECRET" \
+            -H "Content-Type: application/json" \
+            "$ENDPOINT/api/weekly-linear-summary")
+
+          body=${resp%HTTPSTATUS:*}
+          status=${resp##*HTTPSTATUS:}
+
+          echo "HTTP status: $status"
+          echo "$body"
+
+          # Any non-200 is a failure
+          if [[ "$status" -ne 200 ]]; then
+            echo "❌ HTTP $status returned"
+            exit 1
+          fi
+
+          # Check for JSON error field
+          if echo "$body" | jq -e 'has("error")' >/dev/null 2>&1; then
+            echo "❌ Server error:" $(echo "$body" | jq -r '.error')
+            exit 1
+          fi
+
+          # Parse success response
+          if echo "$body" | jq -e '.success == true' >/dev/null 2>&1; then
+            issueCount=$(echo "$body" | jq -r '.issueCount // 0')
+            echo "✅ Weekly Linear summary generated successfully ($issueCount issues)"
+          else
+            echo "❌ Summary generation failed"
+            exit 1
+          fi
