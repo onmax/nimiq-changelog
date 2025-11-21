@@ -28,7 +28,6 @@ export async function fetchLinearDoneIssues(daysAgo = 7): Promise<LinearIssue[]>
 
   const since = new Date()
   since.setDate(since.getDate() - daysAgo)
-  const sinceISO = since.toISOString()
 
   const query = `
     query IssuesQuery($after: String) {
@@ -61,7 +60,7 @@ export async function fetchLinearDoneIssues(daysAgo = 7): Promise<LinearIssue[]>
     let cursor: string | null = null
 
     while (hasNextPage) {
-      const response = await $fetch<LinearResponse>('https://api.linear.app/graphql', {
+      const response: LinearResponse = await $fetch('https://api.linear.app/graphql', {
         method: 'POST',
         headers: {
           'Authorization': linearApiKey,
@@ -75,11 +74,11 @@ export async function fetchLinearDoneIssues(daysAgo = 7): Promise<LinearIssue[]>
         break
       }
 
-      const { nodes, pageInfo } = response.data.issues
-      allIssues.push(...nodes)
+      const issues = response.data.issues
+      allIssues.push(...issues.nodes)
 
-      hasNextPage = pageInfo.hasNextPage
-      cursor = pageInfo.endCursor
+      hasNextPage = issues.pageInfo.hasNextPage
+      cursor = issues.pageInfo.endCursor
     }
 
     // Filter completed issues from the last N days

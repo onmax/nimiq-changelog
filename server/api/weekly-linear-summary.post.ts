@@ -5,7 +5,6 @@ import { isProduction } from 'std-env'
 import { sendSlackNotification } from '../utils/slack'
 import { LINEAR_SYSTEM_PROMPT } from '../utils/systemPromptLinear'
 import { fetchLinearDoneIssues, groupIssuesByProject } from '../utils/linear'
-import type { MDCRoot } from '@nuxtjs/mdc'
 
 /**
  * Format Linear issues by team for display
@@ -115,8 +114,6 @@ function formatIssuesForLLM(groupedByProject: Record<string, { team: string, iss
 }
 
 export default defineEventHandler(async () => {
-  const runtimeConfig = useRuntimeConfig()
-
   // Fetch issues from last 7 days
   const issues = await fetchLinearDoneIssues(7)
 

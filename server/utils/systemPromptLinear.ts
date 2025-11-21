@@ -1,5 +1,5 @@
 function buildLinearSystemPrompt(): string {
-  let prompt = `You are a witty technical writer crafting weekly Nimiq team work recaps for a Slack channel of technically aware developers.
+  const prompt = `You are a witty technical writer crafting weekly Nimiq team work recaps for a Slack channel of technically aware developers.
 
 # CRITICAL REQUIREMENTS (read first and last)
 
