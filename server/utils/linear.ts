@@ -26,8 +26,6 @@ export async function fetchLinearDoneIssues(daysAgo = 7): Promise<LinearIssue[]>
     return []
   }
 
-  consola.info(`Linear API Key length: ${linearApiKey.length}, starts with: ${linearApiKey.substring(0, 10)}`)
-
   const since = new Date()
   since.setDate(since.getDate() - daysAgo)
   const sinceISO = since.toISOString()
@@ -92,9 +90,6 @@ export async function fetchLinearDoneIssues(daysAgo = 7): Promise<LinearIssue[]>
     return allIssues
   } catch (error: any) {
     consola.error('Failed to fetch Linear issues:', error)
-    if (error?.data?.errors) {
-      consola.error('Linear API error details:', JSON.stringify(error.data.errors, null, 2))
-    }
     return []
   }
 }
