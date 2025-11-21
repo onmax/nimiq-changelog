@@ -188,8 +188,7 @@ export default defineEventHandler(async () => {
     year: now.getFullYear(),
     date: now.toISOString(),
     issueCount: issues.length,
-    summaries: summaries.map(s => ({ model: s.name, text: s.text })),
-    issues: formatIssuesForSlackFile(groupedByProject)
+    summaries: summaries.map(s => ({ model: s.name, text: s.text }))
   }
 
   await hubKV().set(currentKey, JSON.stringify(summaryData))
