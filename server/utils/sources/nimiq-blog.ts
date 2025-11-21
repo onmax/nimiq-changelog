@@ -16,7 +16,7 @@ function decodeHtmlEntities(text: string): string {
     .replace(/&#(\d+);/g, (_, dec) => String.fromCharCode(Number(dec)))
     .replace(/&#x([0-9a-f]+);/gi, (_, hex) => String.fromCharCode(Number.parseInt(hex, 16)))
     .replace(/&quot;/g, '"')
-    .replace(/&apos;/g, "'")
+    .replace(/&apos;/g, '\'')
     .replace(/&lt;/g, '<')
     .replace(/&gt;/g, '>')
     .replace(/&amp;/g, '&')
@@ -36,14 +36,14 @@ function extractBlogContent(html: string): { title?: string, content?: string, p
   const contentParts: string[] = []
 
   // Add h1 content
-  if (title) {
-    contentParts.push(title)
+  if (decodedTitle) {
+    contentParts.push(decodedTitle)
   }
 
   // Get first paragraph from article using regex
   const articlePMatch = html.match(/<article[^>]*>[\s\S]*?<p[^>]*>(.*?)<\/p>/is)
   if (articlePMatch?.[1]) {
-    const paragraphText = articlePMatch[1].replace(/<[^>]*>/g, '').trim()
+    const paragraphText = decodeHtmlEntities(articlePMatch[1].replace(/<[^>]*>/g, '').trim())
     if (paragraphText) {
       contentParts.push(paragraphText)
     }
@@ -51,7 +51,7 @@ function extractBlogContent(html: string): { title?: string, content?: string, p
 
   const content = contentParts.join(' ')
 
-  return { title, content, publishDate }
+  return { title: decodedTitle, content, publishDate }
 }
 
 export async function fetchNimiqBlogReleases(config: SourceConfig, _repoFilter?: string): Promise<Release[]> {
