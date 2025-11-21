@@ -11,10 +11,22 @@ async function fetchHtml(url: string, options?: any): Promise<string> {
   return response.text()
 }
 
+function decodeHtmlEntities(text: string): string {
+  return text
+    .replace(/&#(\d+);/g, (_, dec) => String.fromCharCode(Number(dec)))
+    .replace(/&#x([0-9a-f]+);/gi, (_, hex) => String.fromCharCode(Number.parseInt(hex, 16)))
+    .replace(/&quot;/g, '"')
+    .replace(/&apos;/g, "'")
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&amp;/g, '&')
+}
+
 function extractBlogContent(html: string): { title?: string, content?: string, publishDate?: string } {
   // Extract title from h1 element using regex
   const h1Match = html.match(/<h1[^>]*>(.*?)<\/h1>/is)
-  const title = h1Match?.[1]?.replace(/<[^>]*>/g, '').trim() || undefined
+  const title = h1Match?.[1]?.replace(/<[^>]*>/g, '').trim()
+  const decodedTitle = title ? decodeHtmlEntities(title) : undefined
 
   // Extract publication date from <time> element using regex
   const timeMatch = html.match(/<time[^>]*(?:datetime=["']([^"']*)["'])?[^>]*>(.*?)<\/time>/is)
