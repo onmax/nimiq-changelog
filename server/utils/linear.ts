@@ -28,12 +28,17 @@ export async function fetchLinearDoneIssues(daysAgo = 7): Promise<LinearIssue[]>
 
   const since = new Date()
   since.setDate(since.getDate() - daysAgo)
+  const sinceISO = since.toISOString()
 
   const query = `
-    query IssuesQuery($after: String) {
+    query IssuesQuery($after: String, $since: DateTime!) {
       issues(
         first: 50
         after: $after
+        filter: {
+          completedAt: { gte: $since }
+          state: { type: { eq: "completed" } }
+        }
       ) {
         nodes {
           id
@@ -66,7 +71,7 @@ export async function fetchLinearDoneIssues(daysAgo = 7): Promise<LinearIssue[]>
           'Authorization': linearApiKey,
           'Content-Type': 'application/json'
         },
-        body: { query, variables: { after: cursor } }
+        body: { query, variables: { after: cursor, since: sinceISO } }
       })
 
       if (response.errors) {
@@ -81,13 +86,8 @@ export async function fetchLinearDoneIssues(daysAgo = 7): Promise<LinearIssue[]>
       cursor = issues.pageInfo.endCursor
     }
 
-    // Filter completed issues from the last N days
-    const filteredIssues = allIssues.filter(issue =>
-      issue.completedAt && issue.state.type === 'completed' && new Date(issue.completedAt) >= since
-    )
-
-    consola.success(`Fetched ${filteredIssues.length} done issues from Linear (from ${allIssues.length} total)`)
-    return filteredIssues
+    consola.success(`Fetched ${allIssues.length} completed issues from Linear (last ${daysAgo} days)`)
+    return allIssues
   } catch (error) {
     consola.error('Failed to fetch Linear issues:', error)
     return []
