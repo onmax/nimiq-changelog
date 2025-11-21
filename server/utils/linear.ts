@@ -26,6 +26,8 @@ export async function fetchLinearDoneIssues(daysAgo = 7): Promise<LinearIssue[]>
     return []
   }
 
+  consola.info(`Linear API Key length: ${linearApiKey.length}, starts with: ${linearApiKey.substring(0, 10)}`)
+
   const since = new Date()
   since.setDate(since.getDate() - daysAgo)
   const sinceISO = since.toISOString()
