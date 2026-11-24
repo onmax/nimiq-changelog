@@ -27,7 +27,7 @@
     "ai": "^5.0.81",
     "nimiq-css": "^1.0.0-beta.136",
     "nimiq-icons": "^1.0.0-beta.136",
-    "nuxt": "^4.2.0",
+    "nuxt": "^4.7.0",
     "nuxt-safe-runtime-config": "^0.0.3",
     "valibot": "^1.1.0",
     "vue": "^3.5.22"
