@@ -23,5 +23,5 @@ export default defineNuxtConfig({
         showInSummary: v.optional(v.boolean())
       })
     )
-  })),
+  }))
 })
