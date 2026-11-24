@@ -1,7 +1,6 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 import process from 'node:process'
 import { icons as nimiqIcons } from 'nimiq-icons'
-import * as v from 'valibot'
 import { sourcesConfig } from './sources.config'
 
 export default defineNuxtConfig({
@@ -13,7 +12,6 @@ export default defineNuxtConfig({
     '@vueuse/nuxt',
     '@nuxt/fonts',
     '@nuxt/icon',
-    'nuxt-safe-runtime-config',
     '@nuxthub/core'
   ],
   devtools: {
@@ -110,29 +108,5 @@ export default defineNuxtConfig({
     collections: ['lucide', 'simple-icons'],
     // Register the custom Iconify collection provided by `nimiq-icons`
     customCollections: [nimiqIcons]
-  },
-  safeRuntimeConfig: {
-    $schema: v.object({
-      webhookSecret: v.string(),
-      slackBotToken: v.optional(v.string()),
-      slackChannelId: v.optional(v.string()),
-      googleApiKey: v.optional(v.string()),
-      linearApiKey: v.optional(v.string()),
-      sources: v.array(
-        v.object({
-          label: v.string(),
-          source: v.union([
-            v.string(),
-            v.object({
-              kind: v.string(),
-              config: v.optional(v.record(v.string(), v.any()))
-            })
-          ]),
-          token: v.optional(v.string()),
-          showInReleases: v.optional(v.boolean()),
-          showInSummary: v.optional(v.boolean())
-        })
-      )
-    })
   }
 })
